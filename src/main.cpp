@@ -7,8 +7,8 @@
 #include <ui.h>
 
 // TODO Is there a better way to do this?
-#define STR1(x)  #x
-#define STR(x)  STR1(x)
+#define STR1(x) #x
+#define STR(x) STR1(x)
 
 #define N_DEPARTURES 6
 #define UPDATE_INTERVAL 2000
@@ -37,81 +37,96 @@ void initMainscreen()
   departure_items[5] = ui_departureitem6;
 }
 
-void updateDepartureInfo(lv_obj_t *departure_item, const char *line_name, const char *direction, unsigned int diffmin) {
-    lv_obj_t *line = ui_comp_get_child(departure_item, UI_COMP_DEPARTUREITEM_DEPARTURE0LINE);
-    lv_obj_t *destination = ui_comp_get_child(departure_item, UI_COMP_DEPARTUREITEM_DEPARTURE0DIRECTION);
-    lv_obj_t *time_label = ui_comp_get_child(departure_item, UI_COMP_DEPARTUREITEM_DEPARTURE0TIME);
+void updateDepartureInfo(lv_obj_t *departure_item, const char *line_name, const char *direction, unsigned int diffmin)
+{
+  lv_obj_t *line = ui_comp_get_child(departure_item, UI_COMP_DEPARTUREITEM_DEPARTURE0LINE);
+  lv_obj_t *destination = ui_comp_get_child(departure_item, UI_COMP_DEPARTUREITEM_DEPARTURE0DIRECTION);
+  lv_obj_t *time_label = ui_comp_get_child(departure_item, UI_COMP_DEPARTUREITEM_DEPARTURE0TIME);
 
-    if (line == NULL || destination == NULL || time_label == NULL) {
-        // Should never happen, do we need to handle this?
-        return;
-    }
+  if (line == NULL || destination == NULL || time_label == NULL)
+  {
+    // Should never happen, do we need to handle this?
+    return;
+  }
 
-    char buffer[40];
-    if (diffmin == 0) {
-        sprintf(buffer, "", diffmin);
-    } else {
-        sprintf(buffer, "%u'", diffmin);
-    }
+  char buffer[40];
+  if (diffmin == 0)
+  {
+    sprintf(buffer, "", diffmin);
+  }
+  else
+  {
+    sprintf(buffer, "%u'", diffmin);
+  }
 
-    lv_label_set_text(line, line_name);
-    lv_label_set_text(destination, direction);
-    lv_label_set_text(time_label, buffer);
+  lv_label_set_text(line, line_name);
+  lv_label_set_text(destination, direction);
+  lv_label_set_text(time_label, buffer);
 }
 
 void refreshDeparturesPanel(lv_timer_t *timer)
 {
+  log_d("Refreshing departures panel");
   HTTPClient http;
   http.begin(url); // This logs a warning because we're not verifying the certificate
 
   int httpResponseCode = http.GET();
-  if (httpResponseCode > 0)
+  log_d("Response received");
+
+  if (httpResponseCode <= 0)
   {
-    DynamicJsonDocument doc(12288);
-    DeserializationError error = deserializeJson(doc, http.getStream());
-
-    if (error)
-    {
-      log_d("deserializeJson() failed: %s", error.c_str());
-      return;
-    }
-
-    JsonArray departures = doc["departures"];
-    const unsigned int departure_count = departures.size();
-
-    for (int i = 0; i < N_DEPARTURES; i++)
-    {
-      lv_obj_t *departure_item = departure_items[i];
-
-      JsonObject departure = departures[i];
-      const char *direction = departure["direction"];    // e.g. "U Rudow"
-      const char *when = departure["when"];              // e.g. "2020-11-22T15:51:00+01:00"
-      const char *line_name = departure["line"]["name"]; // e.g. "U7"
-
-      struct tm timeinfo = {0};
-
-      // TODO This is weird. Why do we need to set tm_isdst to 1?
-      strptime(when, "%FT%T%z", &timeinfo);
-      timeinfo.tm_isdst = 1;
-
-      struct tm current_timeinfo;
-      getLocalTime(&current_timeinfo); // TODO Handle error in getLocalTime?
-
-      long diffsec = difftime(mktime(&timeinfo), mktime(&current_timeinfo));
-      unsigned long diffsec_abs = diffsec < 0 ? 0 : diffsec;
-      unsigned int diffmin = diffsec_abs / 60;
-
-      updateDepartureInfo(departure_item, line_name, direction, diffmin);
-
-      lv_obj_clear_flag(departure_items[i], LV_OBJ_FLAG_HIDDEN);
-    }
-
-    // hide last departures if we don't have enough to fill the screen
-    for (int i = departure_count; i < N_DEPARTURES; i++)
-    {
-      lv_obj_add_flag(departure_items[i], LV_OBJ_FLAG_HIDDEN);
-    }
+    log_d("Error on HTTP request");
+    return;
   }
+
+  DynamicJsonDocument doc(12288);
+
+  log_d("Parsing response");
+  DeserializationError error = deserializeJson(doc, http.getStream());
+  log_d("Response parsed");
+
+  if (error)
+  {
+    log_d("deserializeJson() failed: %s", error.c_str());
+    return;
+  }
+
+  JsonArray departures = doc["departures"];
+  const unsigned int departure_count = departures.size();
+
+  for (int i = 0; i < N_DEPARTURES; i++)
+  {
+    lv_obj_t *departure_item = departure_items[i];
+
+    JsonObject departure = departures[i];
+    const char *direction = departure["direction"];    // e.g. "U Rudow"
+    const char *when = departure["when"];              // e.g. "2020-11-22T15:51:00+01:00"
+    const char *line_name = departure["line"]["name"]; // e.g. "U7"
+
+    struct tm timeinfo = {0};
+
+    // TODO This is weird. Why do we need to set tm_isdst to 1?
+    strptime(when, "%FT%T%z", &timeinfo);
+    timeinfo.tm_isdst = 1;
+
+    struct tm current_timeinfo;
+    getLocalTime(&current_timeinfo); // TODO Handle error in getLocalTime?
+
+    long diffsec = difftime(mktime(&timeinfo), mktime(&current_timeinfo));
+    unsigned long diffsec_abs = diffsec < 0 ? 0 : diffsec;
+    unsigned int diffmin = diffsec_abs / 60;
+
+    updateDepartureInfo(departure_item, line_name, direction, diffmin);
+
+    lv_obj_clear_flag(departure_items[i], LV_OBJ_FLAG_HIDDEN);
+  }
+
+  // hide last departures if we don't have enough to fill the screen
+  for (int i = departure_count; i < N_DEPARTURES; i++)
+  {
+    lv_obj_add_flag(departure_items[i], LV_OBJ_FLAG_HIDDEN);
+  }
+  log_d("Departures panel refreshed");
 }
 
 void connectToWifi()
