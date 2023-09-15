@@ -28,6 +28,7 @@ void initMainscreen()
   log_d("Loading UI");
   ui_init();
   log_d("UI loaded");
+  lv_timer_handler(); // TODO this is called here so that the screen is initialized before configuring the time. Is there a better way?
 
   departure_items[0] = ui_departureitem1;
   departure_items[1] = ui_departureitem2;
@@ -177,6 +178,8 @@ void setup()
   log_d("Initializing display");
   smartdisplay_init();
   log_d("Display initialized");
+
+  smartdisplay_set_led_color(lv_color32_t({.ch = {.blue = 0, .green = 34, .red = 52}}));
 
   initMainscreen();
 
