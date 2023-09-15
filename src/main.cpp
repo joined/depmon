@@ -15,7 +15,8 @@
 
 lv_obj_t *departure_items[N_DEPARTURES];
 
-const String url = "https://v6.bvg.transport.rest/stops/900078102/departures?results=7&duration=60";
+const String stop_id = "900078102";
+const String url = "https://v6.bvg.transport.rest/stops/" + stop_id + "/departures?results=7&duration=60&remarks=false";
 
 void initMainscreen()
 {
