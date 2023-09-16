@@ -11,7 +11,8 @@
 #define STR(x) STR1(x)
 
 #define N_DEPARTURES 6
-#define UPDATE_INTERVAL 2000
+#define DEPARTURES_REFRESH_INTERVAL 2000
+#define WIFI_CONNECT_TIMEOUT_MS 10000
 
 lv_obj_t *departure_items[N_DEPARTURES];
 
@@ -101,13 +102,35 @@ void refreshDeparturesPanel(void *pvParameters)
   while (true)
   {
     log_d("Refreshing departures panel");
+
+    // TODO Is there a better way to do this? Maybe we should stop/start the task when the WiFi connection changes?
+    // Same for the time below
+    if (!WiFi.isConnected())
+    {
+      log_d("WiFi is not connected, skipping refresh");
+      vTaskDelay(pdMS_TO_TICKS(DEPARTURES_REFRESH_INTERVAL));
+      continue;
+    }
+
     if (!performHttpRequest(http, url.c_str(), doc))
     {
+      log_d("Failed to refresh departures panel due to network error");
+      vTaskDelay(pdMS_TO_TICKS(DEPARTURES_REFRESH_INTERVAL));
       continue;
     }
 
     JsonArray departures = doc["departures"];
     const unsigned int departure_count = departures.size();
+
+    struct tm current_timeinfo;
+    bool isTimeSet = getLocalTime(&current_timeinfo);
+
+    if (!isTimeSet)
+    {
+      log_d("Failed to refresh departures panel due to time not being set");
+      vTaskDelay(pdMS_TO_TICKS(DEPARTURES_REFRESH_INTERVAL));
+      continue;
+    }
 
     for (int i = 0; i < N_DEPARTURES; i++)
     {
@@ -123,9 +146,6 @@ void refreshDeparturesPanel(void *pvParameters)
       // TODO This is weird. Why do we need to set tm_isdst to 1?
       strptime(when, "%FT%T%z", &timeinfo);
       timeinfo.tm_isdst = 1;
-
-      struct tm current_timeinfo;
-      getLocalTime(&current_timeinfo); // TODO Handle error in getLocalTime?
 
       long diffsec = difftime(mktime(&timeinfo), mktime(&current_timeinfo));
       unsigned long diffsec_abs = diffsec < 0 ? 0 : diffsec;
@@ -147,49 +167,8 @@ void refreshDeparturesPanel(void *pvParameters)
 
     http.end();
 
-    vTaskDelay(pdMS_TO_TICKS(UPDATE_INTERVAL));
+    vTaskDelay(pdMS_TO_TICKS(DEPARTURES_REFRESH_INTERVAL));
   }
-}
-
-void connectToWifi()
-{
-  log_d("Connecting to WiFi");
-  WiFi.begin(STR(SECRET_WIFI_SSID), STR(SECRET_WIFI_PASSWORD));
-
-  unsigned int wifi_connect_tries = 0;
-  while (WiFi.status() != WL_CONNECTED)
-  {
-    if (wifi_connect_tries++ > 20)
-    {
-      log_d("Failed to connect to WiFi");
-      return;
-    }
-    delay(500);
-  }
-
-  log_d("Connected to WiFi network with IP Address: %s", WiFi.localIP().toString().c_str());
-}
-
-void configureTime()
-{
-  log_d("Setting time servers");
-
-  const int gmtOffset_sec = 3600;
-  const int daylightOffset_sec = 3600;
-
-  configTime(gmtOffset_sec, daylightOffset_sec, "pool.ntp.org");
-
-  struct tm timeinfo;
-  getLocalTime(&timeinfo);
-  if (!getLocalTime(&timeinfo))
-  {
-    log_d("Failed to obtain time");
-    return;
-  }
-
-  char buffer[40];
-  strftime(buffer, sizeof(buffer), "%A, %B %d %Y %H:%M:%S", &timeinfo);
-  log_d("Current time: %s", buffer);
 }
 
 void updateUi(void *pvParameters)
@@ -198,6 +177,79 @@ void updateUi(void *pvParameters)
   {
     const std::lock_guard<std::recursive_mutex> lock(lvgl_mutex);
     lv_timer_handler();
+  }
+}
+
+void ensureWifiConnected(void *pvParameters)
+{
+  while (true)
+  {
+    if (WiFi.status() == WL_CONNECTED)
+    {
+      log_d("WiFi is connected");
+      vTaskDelay(pdMS_TO_TICKS(10000)); // If we're connected, check again in 10s
+      continue;
+    }
+
+    log_d("WiFi is not connected, trying to connect");
+    WiFi.mode(WIFI_STA);
+    // TODO The reconnect might be handled by the WiFi library itself, so we might not need to do this
+    WiFi.begin(STR(SECRET_WIFI_SSID), STR(SECRET_WIFI_PASSWORD));
+
+    unsigned long startAttemptTime = millis();
+
+    while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < WIFI_CONNECT_TIMEOUT_MS)
+    {
+      vTaskDelay(pdMS_TO_TICKS(500));
+    }
+
+    if (WiFi.status() == WL_CONNECTED)
+    {
+      smartdisplay_set_led_color(lv_color32_t({.ch = {.green = 40}}));
+      log_d("Connected to WiFi network with IP Address: %s", WiFi.localIP().toString().c_str());
+      vTaskDelay(pdMS_TO_TICKS(10000)); // We managed to connect, check again in 10s
+    }
+    else
+    {
+      smartdisplay_set_led_color(lv_color32_t({.ch = {.red = 40}}));
+      log_d("Failed to connect to WiFi");
+      vTaskDelay(pdMS_TO_TICKS(20000)); // If we're not connected, try again in 20s
+    }
+  }
+}
+
+void ensureTimeIsConfigured(void *pvParameters)
+{
+  struct tm timeinfo;
+
+  while (true)
+  {
+    bool isTimeSet = getLocalTime(&timeinfo);
+
+    // TODO Maybe re-configure time after some time so that it does not get out of sync (e.g. every 1 hour?)
+    if (!isTimeSet)
+    {
+      log_d("No local time");
+
+      if (WiFi.isConnected())
+      {
+        log_d("Configuring time");
+        configTime(3600, 3600, "pool.ntp.org");
+      }
+      else
+      {
+        vTaskDelay(pdMS_TO_TICKS(5000)); // Try again in 5 seconds
+      }
+    }
+    else
+    {
+      char buffer[40];
+      strftime(buffer, sizeof(buffer), "%A, %B %d %Y %H:%M:%S", &timeinfo);
+      log_d("Local time is configured. Current time: %s", buffer);
+
+      // TODO We cannot have a `break` here or it will panic, why?
+      vTaskDelay(pdMS_TO_TICKS(5000));
+    }
   }
 }
 
@@ -212,13 +264,24 @@ void setup()
   smartdisplay_set_led_color(lv_color32_t({.ch = {.blue = 0, .green = 34, .red = 52}}));
 
   initMainscreen();
-  lv_timer_handler(); // TODO this is called here so that the screen is initialized before configuring the time. Is there a better way?
 
-  connectToWifi();
+  xTaskCreatePinnedToCore(
+      ensureWifiConnected,
+      "ensureWifiConnected",
+      8192, // TODO Is this enough? 8192 is used by `void loop` by default
+      NULL,
+      1,
+      NULL,
+      CONFIG_ARDUINO_RUNNING_CORE);
 
-  smartdisplay_set_led_color(WiFi.isConnected() ? lv_color32_t({.ch = {.green = 40}}) : lv_color32_t({.ch = {.red = 40}}));
-
-  configureTime();
+  xTaskCreatePinnedToCore(
+      ensureTimeIsConfigured,
+      "ensureTimeIsConfigured",
+      8192, // TODO Is this enough? 8192 is used by `void loop` by default
+      NULL,
+      1,
+      NULL,
+      CONFIG_ARDUINO_RUNNING_CORE);
 
   xTaskCreatePinnedToCore(
       refreshDeparturesPanel,
@@ -227,16 +290,16 @@ void setup()
       NULL,
       1,
       NULL,
-      0);
+      CONFIG_ARDUINO_RUNNING_CORE);
 
   xTaskCreatePinnedToCore(
       updateUi,
       "updateUi",
       8192, // TODO Is this enough? 8192 is used by `void loop` by default
       NULL,
-      10,
+      1,
       NULL,
-      1);
+      0);
 }
 
 void loop() {}
