@@ -20,8 +20,7 @@ const String url = "https://v6.bvg.transport.rest/stops/" + stop_id + "/departur
 
 void initMainscreen()
 {
-  const std::lock_guard<std::recursive_mutex> lock(lvgl_mutex);
-
+  // No need for a lock here because we're still in the setup function, no other task is running yet
   log_d("Cleaning screen");
   lv_obj_clean(lv_scr_act());
   log_d("Screen cleaned");
@@ -29,7 +28,6 @@ void initMainscreen()
   log_d("Loading UI");
   ui_init();
   log_d("UI loaded");
-  lv_timer_handler(); // TODO this is called here so that the screen is initialized before configuring the time. Is there a better way?
 
   departure_items[0] = ui_departureitem1;
   departure_items[1] = ui_departureitem2;
@@ -45,12 +43,6 @@ void updateDepartureInfo(lv_obj_t *departure_item, const char *line_name, const 
   lv_obj_t *destination = ui_comp_get_child(departure_item, UI_COMP_DEPARTUREITEM_DEPARTURE0DIRECTION);
   lv_obj_t *time_label = ui_comp_get_child(departure_item, UI_COMP_DEPARTUREITEM_DEPARTURE0TIME);
 
-  if (line == NULL || destination == NULL || time_label == NULL)
-  {
-    // Should never happen, do we need to handle this?
-    return;
-  }
-
   char buffer[40];
   if (diffmin == 0)
   {
@@ -61,15 +53,18 @@ void updateDepartureInfo(lv_obj_t *departure_item, const char *line_name, const 
     sprintf(buffer, "%u'", diffmin);
   }
 
-  lv_label_set_text(line, line_name);
-  lv_label_set_text(destination, direction);
-  lv_label_set_text(time_label, buffer);
+  {
+    const std::lock_guard<std::recursive_mutex> lock(lvgl_mutex);
+    lv_label_set_text(line, line_name);
+    lv_label_set_text(destination, direction);
+    lv_label_set_text(time_label, buffer);
+    lv_obj_clear_flag(departure_item, LV_OBJ_FLAG_HIDDEN);
+  }
 }
 
-void refreshDeparturesPanel(lv_timer_t *timer)
+/* Takes about 250ms when reusing an existing connection */
+bool performHttpRequest(HTTPClient &http, const char *url, DynamicJsonDocument &doc)
 {
-  log_d("Refreshing departures panel");
-  HTTPClient http;
   http.begin(url); // This logs a warning because we're not verifying the certificate
 
   int httpResponseCode = http.GET();
@@ -78,57 +73,82 @@ void refreshDeparturesPanel(lv_timer_t *timer)
   if (httpResponseCode <= 0)
   {
     log_d("Error on HTTP request");
-    return;
+    http.end();
+    return false;
   }
-
-  DynamicJsonDocument doc(12288);
 
   log_d("Parsing response");
   DeserializationError error = deserializeJson(doc, http.getStream());
   log_d("Response parsed");
 
+  http.end(); // Close the HTTP connection
+
   if (error)
   {
     log_d("deserializeJson() failed: %s", error.c_str());
-    return;
+    return false;
   }
 
-  JsonArray departures = doc["departures"];
-  const unsigned int departure_count = departures.size();
+  return true;
+}
 
-  for (int i = 0; i < N_DEPARTURES; i++)
+/* Takes about 500ms */
+void refreshDeparturesPanel(void *pvParameters)
+{
+  HTTPClient http;
+  DynamicJsonDocument doc(12288);
+
+  while (true)
   {
-    lv_obj_t *departure_item = departure_items[i];
+    log_d("Refreshing departures panel");
+    if (!performHttpRequest(http, url.c_str(), doc))
+    {
+      continue;
+    }
 
-    JsonObject departure = departures[i];
-    const char *direction = departure["direction"];    // e.g. "U Rudow"
-    const char *when = departure["when"];              // e.g. "2020-11-22T15:51:00+01:00"
-    const char *line_name = departure["line"]["name"]; // e.g. "U7"
+    JsonArray departures = doc["departures"];
+    const unsigned int departure_count = departures.size();
 
-    struct tm timeinfo = {0};
+    for (int i = 0; i < N_DEPARTURES; i++)
+    {
+      lv_obj_t *departure_item = departure_items[i];
 
-    // TODO This is weird. Why do we need to set tm_isdst to 1?
-    strptime(when, "%FT%T%z", &timeinfo);
-    timeinfo.tm_isdst = 1;
+      JsonObject departure = departures[i];
+      const char *direction = departure["direction"];    // e.g. "U Rudow"
+      const char *when = departure["when"];              // e.g. "2020-11-22T15:51:00+01:00"
+      const char *line_name = departure["line"]["name"]; // e.g. "U7"
 
-    struct tm current_timeinfo;
-    getLocalTime(&current_timeinfo); // TODO Handle error in getLocalTime?
+      struct tm timeinfo = {0};
 
-    long diffsec = difftime(mktime(&timeinfo), mktime(&current_timeinfo));
-    unsigned long diffsec_abs = diffsec < 0 ? 0 : diffsec;
-    unsigned int diffmin = diffsec_abs / 60;
+      // TODO This is weird. Why do we need to set tm_isdst to 1?
+      strptime(when, "%FT%T%z", &timeinfo);
+      timeinfo.tm_isdst = 1;
 
-    updateDepartureInfo(departure_item, line_name, direction, diffmin);
+      struct tm current_timeinfo;
+      getLocalTime(&current_timeinfo); // TODO Handle error in getLocalTime?
 
-    lv_obj_clear_flag(departure_items[i], LV_OBJ_FLAG_HIDDEN);
+      long diffsec = difftime(mktime(&timeinfo), mktime(&current_timeinfo));
+      unsigned long diffsec_abs = diffsec < 0 ? 0 : diffsec;
+      unsigned int diffmin = diffsec_abs / 60;
+
+      updateDepartureInfo(departure_item, line_name, direction, diffmin);
+    }
+
+    if (departure_count < N_DEPARTURES)
+    {
+      const std::lock_guard<std::recursive_mutex> lock(lvgl_mutex);
+      // hide last departures if we don't have enough to fill the screen
+      for (int i = departure_count; i < N_DEPARTURES; i++)
+      {
+        lv_obj_add_flag(departure_items[i], LV_OBJ_FLAG_HIDDEN);
+      }
+    }
+    log_d("Departures panel refreshed");
+
+    http.end();
+
+    vTaskDelay(pdMS_TO_TICKS(UPDATE_INTERVAL));
   }
-
-  // hide last departures if we don't have enough to fill the screen
-  for (int i = departure_count; i < N_DEPARTURES; i++)
-  {
-    lv_obj_add_flag(departure_items[i], LV_OBJ_FLAG_HIDDEN);
-  }
-  log_d("Departures panel refreshed");
 }
 
 void connectToWifi()
@@ -172,6 +192,15 @@ void configureTime()
   log_d("Current time: %s", buffer);
 }
 
+void updateUi(void *pvParameters)
+{
+  while (true)
+  {
+    const std::lock_guard<std::recursive_mutex> lock(lvgl_mutex);
+    lv_timer_handler();
+  }
+}
+
 void setup()
 {
   Serial.begin(115200);
@@ -183,6 +212,7 @@ void setup()
   smartdisplay_set_led_color(lv_color32_t({.ch = {.blue = 0, .green = 34, .red = 52}}));
 
   initMainscreen();
+  lv_timer_handler(); // TODO this is called here so that the screen is initialized before configuring the time. Is there a better way?
 
   connectToWifi();
 
@@ -190,10 +220,23 @@ void setup()
 
   configureTime();
 
-  lv_timer_t *timer = lv_timer_create(refreshDeparturesPanel, UPDATE_INTERVAL, NULL);
+  xTaskCreatePinnedToCore(
+      refreshDeparturesPanel,
+      "refreshDeparturesPanel",
+      8192, // TODO Is this enough? 8192 is used by `void loop` by default
+      NULL,
+      1,
+      NULL,
+      0);
+
+  xTaskCreatePinnedToCore(
+      updateUi,
+      "updateUi",
+      8192, // TODO Is this enough? 8192 is used by `void loop` by default
+      NULL,
+      10,
+      NULL,
+      1);
 }
 
-void loop()
-{
-  lv_timer_handler();
-}
+void loop() {}
