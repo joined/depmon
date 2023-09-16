@@ -38,29 +38,26 @@ void initMainscreen()
   departure_items[5] = ui_departureitem6;
 }
 
-void updateDepartureInfo(lv_obj_t *departure_item, const char *line_name, const char *direction, unsigned int diffmin)
+void updateDepartureInfo(lv_obj_t *departure_item, const char *line_name, const char *direction, unsigned int timediff)
 {
   lv_obj_t *line = ui_comp_get_child(departure_item, UI_COMP_DEPARTUREITEM_DEPARTURE0LINE);
   lv_obj_t *destination = ui_comp_get_child(departure_item, UI_COMP_DEPARTUREITEM_DEPARTURE0DIRECTION);
   lv_obj_t *time_label = ui_comp_get_child(departure_item, UI_COMP_DEPARTUREITEM_DEPARTURE0TIME);
 
   char buffer[40];
-  if (diffmin == 0)
+  if (timediff == 0)
   {
-    sprintf(buffer, "", diffmin);
+    sprintf(buffer, "", timediff);
   }
   else
   {
-    sprintf(buffer, "%u'", diffmin);
+    sprintf(buffer, "%u'", timediff);
   }
 
-  {
-    const std::lock_guard<std::recursive_mutex> lock(lvgl_mutex);
-    lv_label_set_text(line, line_name);
-    lv_label_set_text(destination, direction);
-    lv_label_set_text(time_label, buffer);
-    lv_obj_clear_flag(departure_item, LV_OBJ_FLAG_HIDDEN);
-  }
+  lv_label_set_text(line, line_name);
+  lv_label_set_text(destination, direction);
+  lv_label_set_text(time_label, buffer);
+  lv_obj_clear_flag(departure_item, LV_OBJ_FLAG_HIDDEN);
 }
 
 /* Takes about 250ms when reusing an existing connection */
@@ -132,37 +129,44 @@ void refreshDeparturesPanel(void *pvParameters)
       continue;
     }
 
-    for (int i = 0; i < N_DEPARTURES; i++)
     {
-      lv_obj_t *departure_item = departure_items[i];
-
-      JsonObject departure = departures[i];
-      const char *direction = departure["direction"];    // e.g. "U Rudow"
-      const char *when = departure["when"];              // e.g. "2020-11-22T15:51:00+01:00"
-      const char *line_name = departure["line"]["name"]; // e.g. "U7"
-
-      struct tm timeinfo = {0};
-
-      // TODO This is weird. Why do we need to set tm_isdst to 1?
-      strptime(when, "%FT%T%z", &timeinfo);
-      timeinfo.tm_isdst = 1;
-
-      long diffsec = difftime(mktime(&timeinfo), mktime(&current_timeinfo));
-      unsigned long diffsec_abs = diffsec < 0 ? 0 : diffsec;
-      unsigned int diffmin = diffsec_abs / 60;
-
-      updateDepartureInfo(departure_item, line_name, direction, diffmin);
-    }
-
-    if (departure_count < N_DEPARTURES)
-    {
+      // Lock this block so that the departures panel is updated all together
+      // Otherwise it might get temporarily inconsistent due to the hiding magic.
+      // TODO Should we create the items ourselves instead of relying on the setup code
+      // provided by LVGL? This would allow us to avoid the hiding magic.
       const std::lock_guard<std::recursive_mutex> lock(lvgl_mutex);
-      // hide last departures if we don't have enough to fill the screen
-      for (int i = departure_count; i < N_DEPARTURES; i++)
+      for (int i = 0; i < N_DEPARTURES; i++)
       {
-        lv_obj_add_flag(departure_items[i], LV_OBJ_FLAG_HIDDEN);
+        lv_obj_t *departure_item = departure_items[i];
+
+        JsonObject departure = departures[i];
+        const char *direction = departure["direction"];    // e.g. "U Rudow"
+        const char *when = departure["when"];              // e.g. "2020-11-22T15:51:00+01:00"
+        const char *line_name = departure["line"]["name"]; // e.g. "U7"
+
+        struct tm timeinfo = {0};
+
+        // TODO This is weird. Why do we need to set tm_isdst to 1?
+        strptime(when, "%FT%T%z", &timeinfo);
+        timeinfo.tm_isdst = 1;
+
+        long diffsec = difftime(mktime(&timeinfo), mktime(&current_timeinfo));
+        unsigned long diffsec_abs = diffsec < 0 ? 0 : diffsec;
+        unsigned int diffmin = diffsec_abs / 60;
+
+        updateDepartureInfo(departure_item, line_name, direction, diffmin);
+      }
+
+      if (departure_count < N_DEPARTURES)
+      {
+        // hide last departures if we don't have enough to fill the screen
+        for (int i = departure_count; i < N_DEPARTURES; i++)
+        {
+          lv_obj_add_flag(departure_items[i], LV_OBJ_FLAG_HIDDEN);
+        }
       }
     }
+
     log_d("Departures panel refreshed");
 
     http.end();
