@@ -261,6 +261,8 @@ void setup()
 {
   Serial.begin(115200);
 
+  log_i("Starting up. Build version: %s", STR(BUILD_VERSION));
+
   log_d("Initializing display");
   smartdisplay_init();
   log_d("Display initialized");
