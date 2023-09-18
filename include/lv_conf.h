@@ -1,10 +1,11 @@
 /**
  * @file lv_conf.h
  * Configuration file for v8.3.2
+ * Only used by the ESP32 target.
  */
 
 /* clang-format off */
-#if 1 /*Set it to "1" to enable content*/
+#ifndef LV_CONF_SKIP /*Make it extra-obvious that this is not used for the simulator*/
 
 #ifndef LV_CONF_H
 #define LV_CONF_H

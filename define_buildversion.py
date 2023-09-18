@@ -1,7 +1,7 @@
 # ruff: noqa
 # type: ignore
 
-Import("env", "projenv")
+Import("projenv")
 
 import subprocess
 

@@ -1,4 +1,3 @@
-// If IntelliSense is broken, use the "Pick Project Environment" command to switch to the "Simulator" environment.
 #include <SDL2/SDL.h>
 #include "lvgl.h"
 #include <cstdio>
