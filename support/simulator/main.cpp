@@ -20,9 +20,9 @@ void randomDeparturesUpdate(lv_timer_t *timer)
 {
   for (int i = 0; i < N_DEPARTURES; i++)
   {
-    lv_obj_t *line = ui_comp_get_child(departure_items[i], UI_COMP_DEPARTUREITEM_DEPARTURE0LINE);
-    lv_obj_t *destination = ui_comp_get_child(departure_items[i], UI_COMP_DEPARTUREITEM_DEPARTURE0DIRECTION);
-    lv_obj_t *time_label = ui_comp_get_child(departure_items[i], UI_COMP_DEPARTUREITEM_DEPARTURE0TIME);
+    lv_obj_t *line = ui_comp_get_child(departure_items[i], UI_COMP_DEPARTUREITEM_LINE);
+    lv_obj_t *destination = ui_comp_get_child(departure_items[i], UI_COMP_DEPARTUREITEM_DIRECTION);
+    lv_obj_t *time_label = ui_comp_get_child(departure_items[i], UI_COMP_DEPARTUREITEM_TIME);
 
     lv_obj_clear_flag(departure_items[i], LV_OBJ_FLAG_HIDDEN);
 

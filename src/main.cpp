@@ -40,9 +40,9 @@ void initMainscreen()
 
 void updateDepartureInfo(lv_obj_t *departure_item, const char *line_name, const char *direction, unsigned int timediff)
 {
-  lv_obj_t *line = ui_comp_get_child(departure_item, UI_COMP_DEPARTUREITEM_DEPARTURE0LINE);
-  lv_obj_t *destination = ui_comp_get_child(departure_item, UI_COMP_DEPARTUREITEM_DEPARTURE0DIRECTION);
-  lv_obj_t *time_label = ui_comp_get_child(departure_item, UI_COMP_DEPARTUREITEM_DEPARTURE0TIME);
+  lv_obj_t *line = ui_comp_get_child(departure_item, UI_COMP_DEPARTUREITEM_LINE);
+  lv_obj_t *destination = ui_comp_get_child(departure_item, UI_COMP_DEPARTUREITEM_DIRECTION);
+  lv_obj_t *time_label = ui_comp_get_child(departure_item, UI_COMP_DEPARTUREITEM_TIME);
 
   char buffer[40];
   if (timediff == 0)

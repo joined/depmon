@@ -10,7 +10,7 @@
         {
           "nid": 551672922,
           "strtype": "OBJECT/Name",
-          "strval": "departure0line",
+          "strval": "line",
           "InheritedType": 10
         },
         {
@@ -4497,7 +4497,7 @@
         {
           "nid": 1235328997,
           "strtype": "OBJECT/Name",
-          "strval": "departure0direction",
+          "strval": "direction",
           "InheritedType": 10
         },
         {
@@ -8984,7 +8984,7 @@
         {
           "nid": -1105516535,
           "strtype": "OBJECT/Name",
-          "strval": "departure0time",
+          "strval": "time",
           "InheritedType": 10
         },
         {
