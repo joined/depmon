@@ -47,7 +47,7 @@ void updateDepartureInfo(lv_obj_t *departure_item, const char *line_name, const 
   char buffer[40];
   if (timediff == 0)
   {
-    sprintf(buffer, "", timediff);
+    buffer[0] = '\0';
   }
   else
   {

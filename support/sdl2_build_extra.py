@@ -8,9 +8,8 @@ Import("env", "projenv")
 exec_name = "${BUILD_DIR}/${PROGNAME}${PROGSUFFIX}"
 
 # Override unused "upload" to execute compiled binary
-# TODO This opens the GUI again on close, why?
 from SCons.Script import AlwaysBuild
-AlwaysBuild(env.Alias("upload", exec_name, exec_name))
+AlwaysBuild(env.Alias("upload", exec_name))
 
 # Add custom target to explorer
 env.AddTarget(
