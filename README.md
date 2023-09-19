@@ -11,11 +11,11 @@ Using ESP32_3248S035C board.
 - Use the "Build" command of the environment you want to target
 
 ## Environments
-There are two environments: `esp32dev` and `simulator`.
-The `esp32dev` target is designed to be uploaded to a [Sunton ESP32-3248S035C board](https://www.aliexpress.com/item/1005004632953455.html).
+There are two environments: `sunton_esp32_3248s035c` and `simulator`.
+The `sunton_esp32_3248s035c` target is designed to be uploaded to a [Sunton ESP32-3248S035C board](https://www.aliexpress.com/item/1005004632953455.html).
 The `simulator` environment uses LVGL's support for SDL to run a native simulation.
 
 ## Common problems
 ### IntelliSense is broken, red/yellow squiggles everywhere, includes cannot be followed
-Use the "Pick Project Environment" command in VSCode to select either `env:esp32dev` or `env:simulator`
+Use the "Pick Project Environment" command in VSCode to select either `env:sunton_esp32_3248s035c` or `env:simulator`
 based on which one you're working with.
