@@ -1,11 +1,10 @@
 /**
  * @file lv_conf.h
  * Configuration file for v8.3.9
- * Only used by the ESP32 target.
  */
 
 /* clang-format off */
-#ifndef LV_CONF_SKIP /*Make it extra-obvious that this is not used for the simulator*/
+#if 1 /*Set it to "1" to enable content*/
 
 #ifndef LV_CONF_H
 #define LV_CONF_H
@@ -80,8 +79,13 @@
  *It removes the need to manually update the tick with `lv_tick_inc()`)*/
 #define LV_TICK_CUSTOM 1
 #if LV_TICK_CUSTOM
+    #ifdef USE_SDL
+    #define LV_TICK_CUSTOM_INCLUDE <SDL2/SDL.h>         /*Header for the system time function*/
+    #define LV_TICK_CUSTOM_SYS_TIME_EXPR (SDL_GetTicks())    /*Expression evaluating to current system time in ms*/
+    #else
     #define LV_TICK_CUSTOM_INCLUDE "Arduino.h"         /*Header for the system time function*/
     #define LV_TICK_CUSTOM_SYS_TIME_EXPR (millis())    /*Expression evaluating to current system time in ms*/
+    #endif
     /*If using lvgl as ESP32 component*/
     // #define LV_TICK_CUSTOM_INCLUDE "esp_timer.h"
     // #define LV_TICK_CUSTOM_SYS_TIME_EXPR ((esp_timer_get_time() / 1000LL))
@@ -237,7 +241,11 @@
 
     /*1: Print the log with 'printf';
     *0: User need to register a callback with `lv_log_register_print_cb()`*/
+    #ifdef USE_SDL
+    #define LV_LOG_PRINTF 1
+    #else
     #define LV_LOG_PRINTF 0
+    #endif
 
     /*Enable/disable LV_LOG_TRACE in modules that produces a huge number of logs*/
     #define LV_LOG_TRACE_MEM        1

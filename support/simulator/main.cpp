@@ -14,18 +14,6 @@
 #define N_DEPARTURES 6
 lv_obj_t *departure_items[N_DEPARTURES];
 
-// TODO Maybe set custom tick to `SDL_GetTicks()` to avoid this
-static int tick_thread(void *data)
-{
-  while (1)
-  {
-    SDL_Delay(5);
-    lv_tick_inc(5);
-  }
-
-  return 0;
-}
-
 static int timer_thread(void *data)
 {
   while (1)
@@ -70,7 +58,6 @@ int main(void)
 
   sdl_init();
 
-  SDL_CreateThread(tick_thread, "tick", NULL);
   SDL_CreateThread(timer_thread, "timer", NULL);
 
   ui_init();
