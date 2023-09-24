@@ -1,0 +1,189 @@
+#include "esp_err.h"
+#include "esp_log.h"
+#include "esp_check.h"
+#include "driver/i2c.h"
+#include "driver/gpio.h"
+#include "driver/spi_master.h"
+#include "esp_lcd_panel_io.h"
+#include "esp_lcd_panel_vendor.h"
+#include "esp_lcd_panel_ops.h"
+#include "esp_lvgl_port.h"
+#include "esp_lcd_st7796.h"
+#include "esp_lcd_touch_gt911.h"
+
+/* LCD size */
+#define LCD_ST7796_H_RES (480)
+#define LCD_ST7796_V_RES (320)
+
+/* LCD settings */
+#define LCD_ST7796_SPI_NUM (SPI2_HOST)
+#define LCD_ST7796_PIXEL_CLK_HZ (80 * 1000 * 1000)
+#define LCD_ST7796_CMD_BITS (8)
+#define LCD_ST7796_PARAM_BITS (8)
+#define LCD_ST7796_ENDIAN (LCD_RGB_ENDIAN_BGR)
+#define LCD_ST7796_BITS_PER_PIXEL (16)
+#define LCD_ST7796_DRAW_BUFF_DOUBLE (1)
+#define LCD_ST7796_DRAW_BUFF_HEIGHT (50)
+#define LCD_ST7796_BL_ON_LEVEL (1)
+
+/* LCD pins */
+#define LCD_ST7796_GPIO_SCLK (GPIO_NUM_14)
+#define LCD_ST7796_GPIO_MOSI (GPIO_NUM_13)
+#define LCD_ST7796_GPIO_DC (GPIO_NUM_2)
+#define LCD_ST7796_GPIO_CS (GPIO_NUM_15)
+#define LCD_ST7796_GPIO_BL (GPIO_NUM_27)
+
+/* Touch settings */
+#define TOUCH_GT911_I2C_NUM (I2C_NUM_0)
+#define TOUCH_GT911_I2C_CLK_HZ (400000)
+
+/* LCD touch pins */
+#define TOUCH_GT911_I2C_SCL (GPIO_NUM_32)
+#define TOUCH_GT911_I2C_SDA (GPIO_NUM_33)
+#define TOUCH_GT911_GPIO_INT (GPIO_NUM_21)
+
+static const char *TAG = "LCD";
+
+/* LCD IO and panel */
+static esp_lcd_panel_io_handle_t lcd_io = NULL;
+static esp_lcd_panel_handle_t lcd_panel = NULL;
+static esp_lcd_touch_handle_t touch_handle = NULL;
+
+/* LVGL display and touch */
+static lv_disp_t *lvgl_disp = NULL;
+static lv_indev_t *lvgl_touch_indev = NULL;
+
+static esp_err_t app_lcd_init(void)
+{
+    esp_err_t ret = ESP_OK;
+
+    /* LCD backlight */
+    gpio_config_t bk_gpio_config = {
+        .pin_bit_mask = 1ULL << LCD_ST7796_GPIO_BL,
+        .mode = GPIO_MODE_OUTPUT,
+    };
+    ESP_ERROR_CHECK(gpio_config(&bk_gpio_config));
+
+    /* LCD initialization */
+    ESP_LOGD(TAG, "Initialize SPI bus");
+    const spi_bus_config_t buscfg = {
+        .mosi_io_num = LCD_ST7796_GPIO_MOSI,
+        .miso_io_num = GPIO_NUM_NC,
+        .sclk_io_num = LCD_ST7796_GPIO_SCLK,
+        .quadwp_io_num = GPIO_NUM_NC,
+        .quadhd_io_num = GPIO_NUM_NC,
+        .max_transfer_sz = LCD_ST7796_H_RES * LCD_ST7796_DRAW_BUFF_HEIGHT * sizeof(uint16_t),
+    };
+    ESP_RETURN_ON_ERROR(spi_bus_initialize(LCD_ST7796_SPI_NUM, &buscfg, SPI_DMA_CH_AUTO), TAG, "SPI init failed");
+
+    ESP_LOGD(TAG, "Install panel IO");
+    const esp_lcd_panel_io_spi_config_t io_config = {
+        .cs_gpio_num = LCD_ST7796_GPIO_CS,
+        .dc_gpio_num = LCD_ST7796_GPIO_DC,
+        .spi_mode = 0,
+        .pclk_hz = LCD_ST7796_PIXEL_CLK_HZ,
+        .trans_queue_depth = 10,
+        .lcd_cmd_bits = LCD_ST7796_CMD_BITS,
+        .lcd_param_bits = LCD_ST7796_PARAM_BITS,
+    };
+    ESP_RETURN_ON_ERROR(esp_lcd_new_panel_io_spi((esp_lcd_spi_bus_handle_t)LCD_ST7796_SPI_NUM, &io_config, &lcd_io), TAG, "New panel IO failed");
+
+    ESP_LOGD(TAG, "Install LCD driver");
+    const esp_lcd_panel_dev_config_t panel_config = {
+        .reset_gpio_num = GPIO_NUM_NC,
+        .rgb_endian = LCD_ST7796_ENDIAN,
+        .bits_per_pixel = LCD_ST7796_BITS_PER_PIXEL,
+    };
+    ESP_RETURN_ON_ERROR(esp_lcd_new_panel_st7796(lcd_io, &panel_config, &lcd_panel), TAG, "New panel failed");
+
+    esp_lcd_panel_reset(lcd_panel);
+    esp_lcd_panel_init(lcd_panel);
+    esp_lcd_panel_mirror(lcd_panel, false, false);
+    esp_lcd_panel_swap_xy(lcd_panel, true);
+    esp_lcd_panel_disp_on_off(lcd_panel, true);
+
+    /* LCD backlight on */
+    ESP_ERROR_CHECK(gpio_set_level(LCD_ST7796_GPIO_BL, LCD_ST7796_BL_ON_LEVEL));
+
+    // We should be doing some cleanup here if the initialization went wrong, but we assume it won't.
+    return ret;
+}
+
+static esp_err_t app_touch_init(void)
+{
+    /* Initilize I2C */
+    const i2c_config_t i2c_conf = {
+        .mode = I2C_MODE_MASTER,
+        .sda_io_num = TOUCH_GT911_I2C_SDA,
+        .scl_io_num = TOUCH_GT911_I2C_SCL,
+        .sda_pullup_en = GPIO_PULLUP_DISABLE,
+        .scl_pullup_en = GPIO_PULLUP_DISABLE,
+        .master = {.clk_speed = TOUCH_GT911_I2C_CLK_HZ}};
+    ESP_RETURN_ON_ERROR(i2c_param_config(TOUCH_GT911_I2C_NUM, &i2c_conf), TAG, "I2C configuration failed");
+    ESP_RETURN_ON_ERROR(i2c_driver_install(TOUCH_GT911_I2C_NUM, i2c_conf.mode, 0, 0, 0), TAG, "I2C initialization failed");
+
+    /* Initialize touch HW */
+    const esp_lcd_touch_config_t tp_cfg = {
+        .x_max = LCD_ST7796_H_RES,
+        .y_max = LCD_ST7796_V_RES,
+        .rst_gpio_num = GPIO_NUM_NC, // Shared with LCD reset
+        .int_gpio_num = TOUCH_GT911_GPIO_INT,
+        .levels = {
+            .reset = 0,
+            .interrupt = 0,
+        },
+        .flags = {
+            // TODO Is this right? Not tested
+            .swap_xy = 1,
+            .mirror_x = 0,
+            .mirror_y = 0,
+        },
+    };
+    esp_lcd_panel_io_handle_t tp_io_handle = NULL;
+    const esp_lcd_panel_io_i2c_config_t tp_io_config = ESP_LCD_TOUCH_IO_I2C_GT911_CONFIG();
+    ESP_RETURN_ON_ERROR(esp_lcd_new_panel_io_i2c((esp_lcd_i2c_bus_handle_t)TOUCH_GT911_I2C_NUM, &tp_io_config, &tp_io_handle), TAG, "");
+    return esp_lcd_touch_new_i2c_gt911(tp_io_handle, &tp_cfg, &touch_handle);
+}
+
+static esp_err_t app_lvgl_init(void)
+{
+    /* Initialize LVGL */
+    const lvgl_port_cfg_t lvgl_cfg = {
+        .task_priority = 4,       /* LVGL task priority */
+        .task_stack = 4096,       /* LVGL task stack size */
+        .task_affinity = -1,      /* LVGL task pinned to core (-1 is no affinity) */
+        .task_max_sleep_ms = 500, /* Maximum sleep in LVGL task */
+        .timer_period_ms = 5      /* LVGL timer tick period in ms */
+    };
+    ESP_RETURN_ON_ERROR(lvgl_port_init(&lvgl_cfg), TAG, "LVGL port initialization failed");
+
+    /* Add LCD screen */
+    ESP_LOGD(TAG, "Add LCD screen");
+    const lvgl_port_display_cfg_t disp_cfg = {
+        .io_handle = lcd_io,
+        .panel_handle = lcd_panel,
+        .buffer_size = LCD_ST7796_H_RES * LCD_ST7796_DRAW_BUFF_HEIGHT * sizeof(uint16_t),
+        .double_buffer = LCD_ST7796_DRAW_BUFF_DOUBLE,
+        .hres = LCD_ST7796_H_RES,
+        .vres = LCD_ST7796_V_RES,
+        .monochrome = false,
+        /* Rotation values must be same as used in esp_lcd for initial settings of the screen */
+        .rotation = {
+            .swap_xy = false,
+            .mirror_x = true,
+            .mirror_y = false,
+        },
+        .flags = {
+            .buff_dma = true,
+        }};
+    lvgl_disp = lvgl_port_add_disp(&disp_cfg);
+
+    /* Add touch input (for selected screen) */
+    const lvgl_port_touch_cfg_t touch_cfg = {
+        .disp = lvgl_disp,
+        .handle = touch_handle,
+    };
+    lvgl_touch_indev = lvgl_port_add_touch(&touch_cfg);
+
+    return ESP_OK;
+}

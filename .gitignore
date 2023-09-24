@@ -1,4 +1,5 @@
-.pio
-.vscode/
+build/
+managed_components/
 
-platformio-local.ini
+sdkconfig
+sdkconfig.old

@@ -1,0 +1,23 @@
+{
+    "configurations": [
+        {
+            "name": "ESP-IDF",
+            // Replace with your compiler path
+            "compilerPath": "/home/myusername/.espressif/tools/xtensa-esp32-elf/esp-12.2.0_20230208/xtensa-esp32-elf/bin/xtensa-esp32-elf-gcc",
+            "includePath": [
+                "${workspaceFolder}/build/config",
+                "${config:idf.espIdfPath}/components/**",
+                "${workspaceFolder}/**"
+            ],
+            "browse": {
+                "path": [
+                    "${workspaceFolder}/build/config",
+                    "${config:idf.espIdfPath}/components",
+                    "${workspaceFolder}"
+                ],
+                "limitSymbolsToIncludedHeaders": false
+            }
+        }
+    ],
+    "version": 4
+}
