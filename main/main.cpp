@@ -17,14 +17,7 @@ static void app_main_display(void)
 
 extern "C" void app_main(void)
 {
-    /* LCD HW initialization */
-    ESP_ERROR_CHECK(app_lcd_init());
-
-    /* Touch initialization */
-    ESP_ERROR_CHECK(app_touch_init());
-
-    /* LVGL initialization */
-    ESP_ERROR_CHECK(app_lvgl_init());
+    app_lcd_touch_lvgl_init();
 
     /* Show LVGL objects */
     app_main_display();

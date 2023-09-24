@@ -86,7 +86,17 @@ static esp_err_t app_lcd_init(void)
         .lcd_cmd_bits = LCD_ST7796_CMD_BITS,
         .lcd_param_bits = LCD_ST7796_PARAM_BITS,
     };
-    ESP_RETURN_ON_ERROR(esp_lcd_new_panel_io_spi((esp_lcd_spi_bus_handle_t)LCD_ST7796_SPI_NUM, &io_config, &lcd_io), TAG, "New panel IO failed");
+    const esp_err_t newPanelIoRet = esp_lcd_new_panel_io_spi((esp_lcd_spi_bus_handle_t)LCD_ST7796_SPI_NUM, &io_config, &lcd_io);
+    if (unlikely(newPanelIoRet != ESP_OK))
+    {
+        ESP_LOGE(TAG, "New panel IO failed");
+        if (lcd_io)
+        {
+            esp_lcd_panel_io_del(lcd_io);
+        }
+        spi_bus_free(LCD_ST7796_SPI_NUM);
+        return newPanelIoRet;
+    }
 
     ESP_LOGD(TAG, "Install LCD driver");
     const esp_lcd_panel_dev_config_t panel_config = {
@@ -94,7 +104,21 @@ static esp_err_t app_lcd_init(void)
         .rgb_endian = LCD_ST7796_ENDIAN,
         .bits_per_pixel = LCD_ST7796_BITS_PER_PIXEL,
     };
-    ESP_RETURN_ON_ERROR(esp_lcd_new_panel_st7796(lcd_io, &panel_config, &lcd_panel), TAG, "New panel failed");
+    const esp_err_t newPanelRet = esp_lcd_new_panel_st7796(lcd_io, &panel_config, &lcd_panel);
+    if (unlikely(newPanelRet != ESP_OK))
+    {
+        ESP_LOGE(TAG, "New panel failed");
+        if (lcd_panel)
+        {
+            esp_lcd_panel_del(lcd_panel);
+        }
+        if (lcd_io)
+        {
+            esp_lcd_panel_io_del(lcd_io);
+        }
+        spi_bus_free(LCD_ST7796_SPI_NUM);
+        return newPanelRet;
+    }
 
     esp_lcd_panel_reset(lcd_panel);
     esp_lcd_panel_init(lcd_panel);
@@ -105,7 +129,6 @@ static esp_err_t app_lcd_init(void)
     /* LCD backlight on */
     ESP_ERROR_CHECK(gpio_set_level(LCD_ST7796_GPIO_BL, LCD_ST7796_BL_ON_LEVEL));
 
-    // We should be doing some cleanup here if the initialization went wrong, but we assume it won't.
     return ret;
 }
 
@@ -183,7 +206,22 @@ static esp_err_t app_lvgl_init(void)
         .disp = lvgl_disp,
         .handle = touch_handle,
     };
+
     lvgl_touch_indev = lvgl_port_add_touch(&touch_cfg);
+
+    return ESP_OK;
+}
+
+static esp_err_t app_lcd_touch_lvgl_init(void)
+{
+    /* LCD HW initialization */
+    ESP_ERROR_CHECK(app_lcd_init());
+
+    /* Touch initialization */
+    ESP_ERROR_CHECK(app_touch_init());
+
+    /* LVGL initialization */
+    ESP_ERROR_CHECK(app_lvgl_init());
 
     return ESP_OK;
 }
