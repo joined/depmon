@@ -23,7 +23,7 @@
 #define LCD_ST7796_ENDIAN (LCD_RGB_ENDIAN_BGR)
 #define LCD_ST7796_BITS_PER_PIXEL (16)
 #define LCD_ST7796_DRAW_BUFF_DOUBLE (1)
-#define LCD_ST7796_DRAW_BUFF_HEIGHT (50)
+#define LCD_ST7796_DRAW_BUFF_HEIGHT (32)
 #define LCD_ST7796_BL_ON_LEVEL (1)
 
 /* LCD pins */
@@ -122,7 +122,6 @@ static esp_err_t app_lcd_init(void)
 
     esp_lcd_panel_reset(lcd_panel);
     esp_lcd_panel_init(lcd_panel);
-    esp_lcd_panel_mirror(lcd_panel, false, false);
     esp_lcd_panel_swap_xy(lcd_panel, true);
     esp_lcd_panel_disp_on_off(lcd_panel, true);
 
