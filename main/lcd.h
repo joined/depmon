@@ -147,8 +147,9 @@ static esp_err_t app_touch_init(void)
 
     /* Initialize touch HW */
     const esp_lcd_touch_config_t tp_cfg = {
-        .x_max = LCD_ST7796_H_RES,
-        .y_max = LCD_ST7796_V_RES,
+        // The driver doesn't swap these internally when `swap_xy` is set, we need to do it manually.
+        .x_max = LCD_ST7796_V_RES,
+        .y_max = LCD_ST7796_H_RES,
         .rst_gpio_num = GPIO_NUM_NC, // Shared with LCD reset
         .int_gpio_num = TOUCH_GT911_GPIO_INT,
         .levels = {
@@ -156,9 +157,8 @@ static esp_err_t app_touch_init(void)
             .interrupt = 0,
         },
         .flags = {
-            // TODO Is this right? Not tested
             .swap_xy = 1,
-            .mirror_x = 0,
+            .mirror_x = 1,
             .mirror_y = 0,
         },
     };
@@ -192,8 +192,8 @@ static esp_err_t app_lvgl_init(void)
         .monochrome = false,
         /* Rotation values must be same as used in esp_lcd for initial settings of the screen */
         .rotation = {
-            .swap_xy = false,
-            .mirror_x = true,
+            .swap_xy = true,
+            .mirror_x = false,
             .mirror_y = false,
         },
         .flags = {
