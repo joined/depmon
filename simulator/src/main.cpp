@@ -83,6 +83,7 @@ int main(void)
 {
   lvgl_sdl_init();
 
+  // Cannot use demo widgets :(
   ui_init();
 
   wait_for_quit();
