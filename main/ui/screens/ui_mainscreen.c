@@ -54,41 +54,5 @@ lv_obj_set_style_pad_bottom(ui_departurespanel, 0, LV_PART_MAIN| LV_STATE_DEFAUL
 lv_obj_set_style_pad_row(ui_departurespanel, 0, LV_PART_MAIN| LV_STATE_DEFAULT);
 lv_obj_set_style_pad_column(ui_departurespanel, 0, LV_PART_MAIN| LV_STATE_DEFAULT);
 
-ui_departureitem1 = ui_departureitem_create(ui_departurespanel);
-lv_obj_set_x( ui_departureitem1, -1 );
-lv_obj_set_y( ui_departureitem1, -89 );
-
-
-
-ui_departureitem2 = ui_departureitem_create(ui_departurespanel);
-lv_obj_set_x( ui_departureitem2, 0 );
-lv_obj_set_y( ui_departureitem2, 80 );
-
-
-
-ui_departureitem3 = ui_departureitem_create(ui_departurespanel);
-lv_obj_set_x( ui_departureitem3, 0 );
-lv_obj_set_y( ui_departureitem3, -42 );
-
-
-
-ui_departureitem4 = ui_departureitem_create(ui_departurespanel);
-lv_obj_set_x( ui_departureitem4, 0 );
-lv_obj_set_y( ui_departureitem4, -9 );
-
-
-
-ui_departureitem5 = ui_departureitem_create(ui_departurespanel);
-lv_obj_set_x( ui_departureitem5, 0 );
-lv_obj_set_y( ui_departureitem5, 36 );
-
-
-
-ui_departureitem6 = ui_departureitem_create(ui_departurespanel);
-lv_obj_set_x( ui_departureitem6, 24 );
-lv_obj_set_y( ui_departureitem6, 110 );
-
-
-
 
 }

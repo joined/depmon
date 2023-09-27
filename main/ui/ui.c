@@ -9,6 +9,14 @@
 ///////////////////// VARIABLES ////////////////////
 
 
+// SCREEN: ui_logs
+void ui_logs_screen_init(void);
+lv_obj_t *ui_logs;
+lv_obj_t *ui_ubahn;
+lv_obj_t *ui_heading;
+lv_obj_t *ui_logspanel;
+
+
 // SCREEN: ui_mainscreen
 void ui_mainscreen_screen_init(void);
 lv_obj_t *ui_mainscreen;
@@ -16,12 +24,6 @@ lv_obj_t *ui_line;
 lv_obj_t *ui_direction;
 lv_obj_t *ui_departure;
 lv_obj_t *ui_departurespanel;
-lv_obj_t *ui_departureitem1;
-lv_obj_t *ui_departureitem2;
-lv_obj_t *ui_departureitem3;
-lv_obj_t *ui_departureitem4;
-lv_obj_t *ui_departureitem5;
-lv_obj_t *ui_departureitem6;
 lv_obj_t *ui____initial_actions0;
 
 ///////////////////// TEST LVGL SETTINGS ////////////////////
@@ -44,7 +46,8 @@ void ui_init( void )
 lv_disp_t *dispp = lv_disp_get_default();
 lv_theme_t *theme = lv_theme_default_init(dispp, lv_palette_main(LV_PALETTE_BLUE), lv_palette_main(LV_PALETTE_RED), true, LV_FONT_DEFAULT);
 lv_disp_set_theme(dispp, theme);
+ui_logs_screen_init();
 ui_mainscreen_screen_init();
 ui____initial_actions0 = lv_obj_create(NULL);
-lv_disp_load_scr( ui_mainscreen);
+lv_disp_load_scr( ui_logs);
 }

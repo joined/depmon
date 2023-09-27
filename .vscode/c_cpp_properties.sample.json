@@ -7,13 +7,15 @@
             "includePath": [
                 "${workspaceFolder}/build/config",
                 "${config:idf.espIdfPath}/components/**",
-                "${workspaceFolder}/**"
+                "${workspaceFolder}/main/ui/**",
+                "${workspaceFolder}/managed_components/**"
             ],
             "browse": {
                 "path": [
                     "${workspaceFolder}/build/config",
                     "${config:idf.espIdfPath}/components",
-                    "${workspaceFolder}"
+                    "${workspaceFolder}/main/ui",
+                    "${workspaceFolder}/managed_components"
                 ],
                 "limitSymbolsToIncludedHeaders": false
             }

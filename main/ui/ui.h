@@ -26,6 +26,12 @@ extern "C" {
 #include "components/ui_comp.h"
 #include "components/ui_comp_hook.h"
 #include "ui_events.h"
+// SCREEN: ui_logs
+void ui_logs_screen_init(void);
+extern lv_obj_t *ui_logs;
+extern lv_obj_t *ui_ubahn;
+extern lv_obj_t *ui_heading;
+extern lv_obj_t *ui_logspanel;
 // SCREEN: ui_mainscreen
 void ui_mainscreen_screen_init(void);
 extern lv_obj_t *ui_mainscreen;
@@ -33,16 +39,11 @@ extern lv_obj_t *ui_line;
 extern lv_obj_t *ui_direction;
 extern lv_obj_t *ui_departure;
 extern lv_obj_t *ui_departurespanel;
-extern lv_obj_t *ui_departureitem1;
-extern lv_obj_t *ui_departureitem2;
-extern lv_obj_t *ui_departureitem3;
-extern lv_obj_t *ui_departureitem4;
-extern lv_obj_t *ui_departureitem5;
-extern lv_obj_t *ui_departureitem6;
 extern lv_obj_t *ui____initial_actions0;
 
+LV_IMG_DECLARE( ui_img_ubahn_png);   // assets/ubahn.png
 
-
+LV_FONT_DECLARE( ui_font_terminus16regular);
 LV_FONT_DECLARE( ui_font_terminus28bold);
 LV_FONT_DECLARE( ui_font_terminus36bold);
 

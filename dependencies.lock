@@ -18,11 +18,11 @@ dependencies:
       type: service
     version: 1.1.0
   espressif/esp_lcd_touch_gt911:
-    component_hash: e3d8f37a430c4d053346b27fb1eec2b0670d0e07d9eb8a8cd084ac06f4cc5b80
+    component_hash: 20ac25d1439dbe177764dbed9cd868388fecb052380b5349f2e9e370013ca76a
     source:
       service_url: https://api.components.espressif.com/
       type: service
-    version: 1.0.7~1
+    version: 1.1.0
   espressif/esp_lvgl_port:
     component_hash: 11100917e7bc3166b56c6519b61d63b623db9abc8470e5d20439b3b2492477df
     source:
@@ -35,11 +35,11 @@ dependencies:
       type: idf
     version: 5.1.1
   lvgl/lvgl:
-    component_hash: a0525d74dd85092059565b91030daf539a76cce82386972ffebbde67016eb730
+    component_hash: 51022b16bce6ee90f54a8bd21cd6d497d886916899b577b1bebb9125b91e23fc
     source:
       service_url: https://api.components.espressif.com/
       type: service
-    version: 8.3.9
+    version: 8.3.10
 manifest_hash: cd2b2c9bc62108a2a2b60d023fd2c525783c0d1d1d8e035b28759daf8ebd27a9
 target: esp32
 version: 1.0.0
