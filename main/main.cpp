@@ -21,7 +21,9 @@ extern "C" void app_main(void) {
 
     this_thread::sleep_for(5s);
 
-    LogsScreen::switchTo();
+    // TODO This looks pretty bad, but it looks fine in the simulator. What's going on?
+    LogsScreen::switchTo(LV_SCR_LOAD_ANIM_FADE_ON);
+    this_thread::sleep_for(1s);
 
     // Ideas to test what constrains this loop:
     // Have a single label that is updated with the current time, so that less
@@ -31,7 +33,8 @@ extern "C" void app_main(void) {
         this_thread::sleep_for(100ms);
     }
 
-    DeparturesScreen::switchTo();
+    DeparturesScreen::switchTo(LV_SCR_LOAD_ANIM_OVER_LEFT);
+    this_thread::sleep_for(1s);
 
     for (int i = 0; i < 20; i++) {
         DeparturesScreen::addRandomDepartureItem();

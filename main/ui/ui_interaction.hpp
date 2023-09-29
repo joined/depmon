@@ -13,10 +13,12 @@ recursive_mutex lvgl_mutex;
 // TODO Extract each screen to a separate file
 class LogsScreen {
   public:
-    static bool switchTo() {
+    // TODO Extract this to some sort of common base class
+    static bool switchTo(lv_scr_load_anim_t anim_type = LV_SCR_LOAD_ANIM_OVER_LEFT, uint32_t time = 1000,
+                         uint32_t delay = 0) {
         if (ui_logs != nullptr) {
             const lock_guard<recursive_mutex> lock(lvgl_mutex);
-            lv_disp_load_scr(ui_logs);
+            lv_scr_load_anim(ui_logs, anim_type, time, delay, false);
             return true;
         }
         return false;
@@ -55,14 +57,17 @@ class LogsScreen {
 
 class DeparturesScreen {
   public:
-    static bool switchTo() {
+    // TODO Extract this to a common base class
+    static bool switchTo(lv_scr_load_anim_t anim_type = LV_SCR_LOAD_ANIM_OVER_LEFT, uint32_t time = 1000,
+                         uint32_t delay = 0) {
         if (ui_departures != nullptr) {
             const lock_guard<recursive_mutex> lock(lvgl_mutex);
-            lv_disp_load_scr(ui_departures);
+            lv_scr_load_anim(ui_departures, anim_type, time, delay, false);
             return true;
         }
         return false;
     }
+
     static bool addRandomDepartureItem() {
         const lock_guard<recursive_mutex> lock(lvgl_mutex);
 

@@ -9,6 +9,11 @@ set(COMPONENTS main)
 
 # For the LCD/Touch initializers in `lcd.h`
 idf_build_set_property(COMPILE_OPTIONS "-Wno-missing-field-initializers" APPEND)
+
+# Due to `ui_helpers` referencing disabled widgets
+# TODO This causes warnings when compiling some C++ files because it's only valid for C/ObjC, fix it
+idf_build_set_property(COMPILE_OPTIONS "-Wno-implicit-function-declaration" APPEND)
+
 # TODO Fix deprecated enum conversion warning
 
 project(bvg_departures)

@@ -16,17 +16,17 @@ int main(void) {
 
     this_thread::sleep_for(5s);
 
-    LogsScreen::switchTo();
+    LogsScreen::switchTo(LV_SCR_LOAD_ANIM_FADE_ON);
 
     // Ideas to test what constrains this loop:
     // Have a single label that is updated with the current time, so that less
     // of the screen is updated. Film with slow mo.
-    for (int i = 0; i < 50; i++) {
+    for (int i = 0; i < 20; i++) {
         LogsScreen::addLogLine("Test " + to_string(SDL_GetTicks()));
         this_thread::sleep_for(100ms);
     }
 
-    DeparturesScreen::switchTo();
+    DeparturesScreen::switchTo(LV_SCR_LOAD_ANIM_OVER_LEFT);
 
     for (int i = 0; i < 20; i++) {
         DeparturesScreen::addRandomDepartureItem();
