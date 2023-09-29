@@ -24,9 +24,9 @@ lv_obj_t *ui_heading;
 lv_obj_t *ui_logspanel;
 
 
-// SCREEN: ui_mainscreen
-void ui_mainscreen_screen_init(void);
-lv_obj_t *ui_mainscreen;
+// SCREEN: ui_departures
+void ui_departures_screen_init(void);
+lv_obj_t *ui_departures;
 lv_obj_t *ui_line;
 lv_obj_t *ui_direction;
 lv_obj_t *ui_departure;
@@ -55,7 +55,7 @@ lv_theme_t *theme = lv_theme_default_init(dispp, lv_palette_main(LV_PALETTE_BLUE
 lv_disp_set_theme(dispp, theme);
 ui_splash_screen_init();
 ui_logs_screen_init();
-ui_mainscreen_screen_init();
+ui_departures_screen_init();
 ui____initial_actions0 = lv_obj_create(NULL);
 lv_disp_load_scr( ui_splash);
 }

@@ -37,9 +37,9 @@ extern lv_obj_t *ui_logs;
 extern lv_obj_t *ui_ubahn;
 extern lv_obj_t *ui_heading;
 extern lv_obj_t *ui_logspanel;
-// SCREEN: ui_mainscreen
-void ui_mainscreen_screen_init(void);
-extern lv_obj_t *ui_mainscreen;
+// SCREEN: ui_departures
+void ui_departures_screen_init(void);
+extern lv_obj_t *ui_departures;
 extern lv_obj_t *ui_line;
 extern lv_obj_t *ui_direction;
 extern lv_obj_t *ui_departure;

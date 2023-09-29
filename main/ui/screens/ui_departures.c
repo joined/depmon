@@ -5,14 +5,14 @@
 
 #include "../ui.h"
 
-void ui_mainscreen_screen_init(void)
+void ui_departures_screen_init(void)
 {
-ui_mainscreen = lv_obj_create(NULL);
-lv_obj_clear_flag( ui_mainscreen, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
-lv_obj_set_style_bg_color(ui_mainscreen, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT );
-lv_obj_set_style_bg_opa(ui_mainscreen, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
+ui_departures = lv_obj_create(NULL);
+lv_obj_clear_flag( ui_departures, LV_OBJ_FLAG_SCROLLABLE );    /// Flags
+lv_obj_set_style_bg_color(ui_departures, lv_color_hex(0x000000), LV_PART_MAIN | LV_STATE_DEFAULT );
+lv_obj_set_style_bg_opa(ui_departures, 255, LV_PART_MAIN| LV_STATE_DEFAULT);
 
-ui_line = lv_label_create(ui_mainscreen);
+ui_line = lv_label_create(ui_departures);
 lv_obj_set_width( ui_line, LV_SIZE_CONTENT);  /// 1
 lv_obj_set_height( ui_line, LV_SIZE_CONTENT);   /// 1
 lv_obj_set_x( ui_line, 20 );
@@ -34,7 +34,7 @@ lv_obj_set_x( ui_departure, 346 );
 lv_obj_set_y( ui_departure, 0 );
 lv_label_set_text(ui_departure,"Abfahrt");
 
-ui_departurespanel = lv_obj_create(ui_mainscreen);
+ui_departurespanel = lv_obj_create(ui_departures);
 lv_obj_set_width( ui_departurespanel, 447);
 lv_obj_set_height( ui_departurespanel, 235);
 lv_obj_set_x( ui_departurespanel, 0 );
@@ -42,7 +42,9 @@ lv_obj_set_y( ui_departurespanel, -20 );
 lv_obj_set_align( ui_departurespanel, LV_ALIGN_BOTTOM_MID );
 lv_obj_set_flex_flow(ui_departurespanel,LV_FLEX_FLOW_COLUMN);
 lv_obj_set_flex_align(ui_departurespanel, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
-lv_obj_clear_flag( ui_departurespanel, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_PRESS_LOCK | LV_OBJ_FLAG_CLICK_FOCUSABLE | LV_OBJ_FLAG_GESTURE_BUBBLE | LV_OBJ_FLAG_SNAPPABLE | LV_OBJ_FLAG_SCROLLABLE | LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN );    /// Flags
+lv_obj_add_flag( ui_departurespanel, LV_OBJ_FLAG_SCROLL_ONE );   /// Flags
+lv_obj_set_scroll_snap_y( ui_departurespanel, LV_SCROLL_SNAP_END );  // SquareLine will override this, not sure how to set it there
+lv_obj_clear_flag( ui_departurespanel, LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN );    /// Flags
 lv_obj_set_style_radius(ui_departurespanel, 0, LV_PART_MAIN| LV_STATE_DEFAULT);
 lv_obj_set_style_bg_color(ui_departurespanel, lv_color_hex(0xFFFF00), LV_PART_MAIN | LV_STATE_DEFAULT );
 lv_obj_set_style_bg_opa(ui_departurespanel, 51, LV_PART_MAIN| LV_STATE_DEFAULT);

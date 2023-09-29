@@ -13500,18 +13500,18 @@
       "flags": 17,
       "strtype": "OBJECT/Position",
       "intarray": [
-        -1,
-        -89
+        0,
+        0
       ],
       "InheritedType": 7
     },
     {
       "nid": -581814061,
-      "flags": 17,
+      "flags": 49,
       "strtype": "OBJECT/Size",
       "intarray": [
         441,
-        38
+        1
       ],
       "InheritedType": 7
     },
@@ -13529,7 +13529,7 @@
     {
       "nid": -73252904,
       "strtype": "OBJECT/Hidden",
-      "strval": "True",
+      "strval": "False",
       "InheritedType": 2
     },
     {
@@ -13944,9 +13944,9 @@
               "strtype": "_style/Padding",
               "intarray": [
                 5,
-                0,
                 5,
-                5
+                2,
+                2
               ],
               "InheritedType": 7
             },

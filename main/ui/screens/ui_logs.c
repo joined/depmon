@@ -38,6 +38,7 @@ lv_obj_set_y( ui_logspanel, -18 );
 lv_obj_set_align( ui_logspanel, LV_ALIGN_BOTTOM_MID );
 lv_obj_set_flex_flow(ui_logspanel,LV_FLEX_FLOW_COLUMN);
 lv_obj_set_flex_align(ui_logspanel, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_SPACE_BETWEEN);
+lv_obj_set_scroll_snap_y( ui_logspanel, LV_SCROLL_SNAP_END );  // SquareLine will override this, not sure how to set it there
 lv_obj_add_flag( ui_logspanel, LV_OBJ_FLAG_SCROLL_ONE );   /// Flags
 lv_obj_clear_flag( ui_logspanel, LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE );    /// Flags
 lv_obj_set_style_radius(ui_logspanel, 0, LV_PART_MAIN| LV_STATE_DEFAULT);

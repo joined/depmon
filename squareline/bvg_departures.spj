@@ -780,7 +780,8 @@
             "InheritedType": 2
           }
         ],
-        "saved_objtypeKey": "SCREEN"
+        "saved_objtypeKey": "SCREEN",
+        "tree_closed": true
       },
       {
         "guid": "GUID8363011-426066S4772262",
@@ -1580,7 +1581,6 @@
               },
               {
                 "nid": -1791748999,
-                "flags": 1048576,
                 "strtype": "OBJECT/States",
                 "InheritedType": 1
               },
@@ -2876,7 +2876,6 @@
               },
               {
                 "nid": 1506303191,
-                "flags": 1048576,
                 "strtype": "OBJECT/Flags",
                 "InheritedType": 1
               },
@@ -2889,7 +2888,7 @@
               {
                 "nid": 1795322711,
                 "strtype": "OBJECT/Clickable",
-                "strval": "False",
+                "strval": "True",
                 "InheritedType": 2
               },
               {
@@ -2901,13 +2900,13 @@
               {
                 "nid": -250335236,
                 "strtype": "OBJECT/Press_lock",
-                "strval": "False",
+                "strval": "True",
                 "InheritedType": 2
               },
               {
                 "nid": -1229533092,
                 "strtype": "OBJECT/Click_focusable",
-                "strval": "False",
+                "strval": "True",
                 "InheritedType": 2
               },
               {
@@ -2949,19 +2948,19 @@
               {
                 "nid": 1532483180,
                 "strtype": "OBJECT/Gesture_bubble",
-                "strval": "False",
+                "strval": "True",
                 "InheritedType": 2
               },
               {
                 "nid": 658361235,
                 "strtype": "OBJECT/Snappable",
-                "strval": "False",
+                "strval": "True",
                 "InheritedType": 2
               },
               {
                 "nid": -1050750393,
                 "strtype": "OBJECT/Scrollable",
-                "strval": "False",
+                "strval": "True",
                 "InheritedType": 2
               },
               {
@@ -2997,7 +2996,7 @@
               {
                 "nid": -1031645769,
                 "strtype": "OBJECT/Scroll_one",
-                "strval": "False",
+                "strval": "True",
                 "InheritedType": 2
               },
               {
@@ -3133,7 +3132,8 @@
                 "InheritedType": 11
               }
             ],
-            "saved_objtypeKey": "PANEL"
+            "saved_objtypeKey": "PANEL",
+            "tree_closed": true
           }
         ],
         "isPage": true,
@@ -3142,7 +3142,7 @@
           {
             "nid": -667117550,
             "strtype": "OBJECT/Name",
-            "strval": "mainscreen",
+            "strval": "departures",
             "InheritedType": 10
           },
           {
@@ -3366,8 +3366,7 @@
             "InheritedType": 2
           }
         ],
-        "saved_objtypeKey": "SCREEN",
-        "tree_closed": true
+        "saved_objtypeKey": "SCREEN"
       }
     ],
     "locked": false,
@@ -3406,7 +3405,7 @@
     "theme_color2": 0,
     "exportFolderPath": "/home/joined/esp/bvg_departures_repo/main/ui",
     "projectExportFolderPath": "",
-    "backup_cnt": 192,
+    "backup_cnt": 215,
     "autosave_cnt": 0,
     "lvgl_version": "8.3.6",
     "callfuncsexport": "C_FILE",
