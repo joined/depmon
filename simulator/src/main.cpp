@@ -16,8 +16,12 @@ int main(void) {
 
     app_main_display();
 
+    this_thread::sleep_for(5s);
+
+    lv_disp_load_scr(ui_logs);
+
     while (true) {
         LogsScreen::addLogLine("Hello world " + to_string(SDL_GetTicks()));
-        this_thread::sleep_for(10ms);
+        this_thread::sleep_for(100ms);
     }
 }

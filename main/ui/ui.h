@@ -26,6 +26,11 @@ extern "C" {
 #include "components/ui_comp.h"
 #include "components/ui_comp_hook.h"
 #include "ui_events.h"
+// SCREEN: ui_splash
+void ui_splash_screen_init(void);
+extern lv_obj_t *ui_splash;
+extern lv_obj_t *ui_splashtitle;
+extern lv_obj_t *ui_splashspinner;
 // SCREEN: ui_logs
 void ui_logs_screen_init(void);
 extern lv_obj_t *ui_logs;
@@ -46,6 +51,7 @@ LV_IMG_DECLARE( ui_img_ubahn_png);   // assets/ubahn.png
 LV_FONT_DECLARE( ui_font_terminus16regular);
 LV_FONT_DECLARE( ui_font_terminus28bold);
 LV_FONT_DECLARE( ui_font_terminus36bold);
+LV_FONT_DECLARE( ui_font_robotocondensed96regular);
 
 void ui_init(void);
 

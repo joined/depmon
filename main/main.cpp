@@ -21,10 +21,13 @@ extern "C" void app_main(void) {
 
     app_main_display();
 
+    this_thread::sleep_for(5s);
+
+    lv_disp_load_scr(ui_logs);
+
     // Ideas to test what constrains this loop:
     // Have a single label that is updated with the current time, so that less
     // of the screen is updated. Film with slow mo.
-
     while (true) {
         LogsScreen::addLogLine("Test " + to_string(esp_timer_get_time() / 1000));
         this_thread::sleep_for(100ms);
