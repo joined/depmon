@@ -7,9 +7,8 @@ using namespace std::chrono_literals;
 using namespace std;
 
 static void app_main_display(void) {
-    ACQUIRE_LVGL_LOCK();
+    const std::lock_guard<std::recursive_mutex> lock(lvgl_mutex);
     ui_init();
-    RELEASE_LVGL_LOCK();
 }
 
 int main(void) {

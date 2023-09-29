@@ -1,15 +1,20 @@
-#include "driver/gpio.h"
-#include "driver/i2c.h"
-#include "driver/spi_master.h"
-#include "esp_check.h"
-#include "esp_err.h"
-#include "esp_lcd_panel_io.h"
-#include "esp_lcd_panel_ops.h"
-#include "esp_lcd_panel_vendor.h"
-#include "esp_lcd_st7796.h"
-#include "esp_lcd_touch_gt911.h"
-#include "esp_log.h"
-#include "esp_lvgl_port.h"
+#include <driver/gpio.h>
+#include <driver/i2c.h>
+#include <driver/spi_master.h>
+#include <esp_check.h>
+#include <esp_err.h>
+#include <esp_freertos_hooks.h>
+#include <esp_lcd_panel_io.h>
+#include <esp_lcd_panel_ops.h>
+#include <esp_lcd_panel_vendor.h>
+#include <esp_lcd_st7796.h>
+#include <esp_lcd_touch_gt911.h>
+#include <esp_log.h>
+#include <esp_lvgl_port.h>
+#include <freertos/task.h>
+#include <mutex>
+
+#include "ui_interaction.hpp"
 
 /* LCD size */
 #define LCD_ST7796_H_RES (480)
@@ -166,23 +171,28 @@ static esp_err_t app_touch_init(void) {
     return esp_lcd_touch_new_i2c_gt911(tp_io_handle, &tp_cfg, &touch_handle);
 }
 
+static void IRAM_ATTR lvgl_port_tick_increment(void) { lv_tick_inc(portTICK_PERIOD_MS); };
+
+static void IRAM_ATTR timer_task(void *arg) {
+    // Relying on the return value of `lv_timer_handler` like `esp_lvgl_port` does
+    // to decide the `vTaskDelay` does not seem to work, we then get UI updates
+    // only after max_sleep_ms, so we just use a fixed delay.
+    while (true) {
+        {
+            const std::lock_guard<std::recursive_mutex> lock(lvgl_mutex);
+            lv_timer_handler();
+        }
+        vTaskDelay(pdMS_TO_TICKS(5));
+    }
+};
+
 static esp_err_t app_lvgl_init(void) {
     /* Initialize LVGL */
-    // TODO Use esp_get_timer for tick inc? Maybe would solve the problems below. It's suggested in lv_conf_template
-    const lvgl_port_cfg_t lvgl_cfg = {
-        .task_priority = 4, /* LVGL task priority */
-        .task_stack = 4096, /* LVGL task stack size */
-        // TODO Follow suggestion in https://github.com/lvgl/lv_port_esp32/issues/310, avoid using esp_lvgl_port and use
-        // IRAM_ATTR instead for timer/tick threads? The problem seems to be that `lvgl_port_tick_increment` is called
-        // from an interrupt and it does not have the IRAM_ATTR attribute But what does that have to do with the
-        // affinity of the timer task...?
-        .task_affinity = 0,       /* LVGL task pinned to core 0. Not pinning (-1) causes core dumps in some cases, see
-                                     https://github.com/lvgl/lv_port_esp32/issues/310 */
-        .task_max_sleep_ms = 500, /* Maximum sleep in LVGL task */
-        .timer_period_ms = 5      /* LVGL timer tick period in ms */
-    };
+    lv_init();
 
-    ESP_RETURN_ON_ERROR(lvgl_port_init(&lvgl_cfg), TAG, "LVGL port initialization failed");
+    esp_register_freertos_tick_hook(lvgl_port_tick_increment);
+    ESP_RETURN_ON_FALSE(xTaskCreatePinnedToCore(timer_task, "lvgl_timer", 4096, NULL, 4, NULL, 0) == pdPASS, 127, TAG,
+                        "%s", "Failed to create lvgl_timer task");
 
     /* Add LCD screen */
     ESP_LOGD(TAG, "Add LCD screen");

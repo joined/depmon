@@ -12,15 +12,18 @@ using namespace std::chrono_literals;
 using namespace std;
 
 static void app_main_display(void) {
-    ACQUIRE_LVGL_LOCK();
+    const std::lock_guard<std::recursive_mutex> lock(lvgl_mutex);
     ui_init();
-    RELEASE_LVGL_LOCK();
 }
 
 extern "C" void app_main(void) {
     LVGL_LCD::init();
 
     app_main_display();
+
+    // Ideas to test what constrains this loop:
+    // Have a single label that is updated with the current time, so that less
+    // of the screen is updated. Film with slow mo.
 
     while (true) {
         LogsScreen::addLogLine("Test " + to_string(esp_timer_get_time() / 1000));

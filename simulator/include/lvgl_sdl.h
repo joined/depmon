@@ -18,9 +18,10 @@ void sdl_log_callback(const char *buffer) { SDL_Log("%s", buffer); }
 static int timer_thread(void *data) {
     SDL_Log("Starting timer thread\n");
     while (true) {
-        ACQUIRE_LVGL_LOCK();
-        lv_timer_handler();
-        RELEASE_LVGL_LOCK();
+        {
+            const std::lock_guard<std::recursive_mutex> lock(lvgl_mutex);
+            lv_timer_handler();
+        }
         SDL_Delay(5);
     }
 
@@ -53,7 +54,6 @@ static void init() {
     static lv_indev_drv_t indev_drv;
     lv_indev_drv_init(&indev_drv); /*Basic initialization*/
     indev_drv.type = LV_INDEV_TYPE_POINTER;
-    // TODO At least one axis seems inverted, fix it (wrap sdl_mouse_read?)
     indev_drv.read_cb = sdl_mouse_read; /*This function will be called periodically (by the library) to get the mouse
                                            position and state*/
     lv_indev_drv_register(&indev_drv);
