@@ -1,3 +1,0 @@
-From https://character-table.netlify.app/german/, converted to a format that LVGL's font converter and SquareLine Studio like
-
-U+20-5F, U+61-7D, U+A0, U+A7, U+A9, U+AB, U+BB, U+C4, U+D6, U+DC, U+DF, U+E4, U+F6, U+FC, U+2010-2011, U+2013-2014, U+2018, U+201A, U+201C, U+201E, U+2026, U+2030, U+20AC

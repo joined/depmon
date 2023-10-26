@@ -1,36 +1,35 @@
-#include <chrono>
-#include <thread>
-#include <string>
 #include "lvgl_sdl.h"
+#include <chrono>
+#include <string>
+#include <thread>
 
 using namespace std::chrono_literals;
 using namespace std;
 
+static const string AP_SSID = "esp32";
+static const string AP_PASSWORD = "whatever";
+static const string PROVISIONING_QR_CODE_DATA = "WIFI:S:" + AP_SSID + ";T:WPA;P:" + AP_PASSWORD + ";;";
+
 int main(void) {
     LVGL_SDL::init();
 
-    {
-        const std::lock_guard<std::recursive_mutex> lock(lvgl_mutex);
-        ui_init();
-    }
+    UIManager::init();
+
+    this_thread::sleep_for(2s);
+
+    logs_screen.switchTo();
+    logs_screen.addLogLine("It looks like you're trying to set up your device.");
+    logs_screen.addLogLine("Please scan the following QR code to connect to the device:");
+    logs_screen.addQRCode(PROVISIONING_QR_CODE_DATA);
+    logs_screen.addLogLine("Alternatively, connect to the network \"" + AP_SSID + "\" with password \"" + AP_PASSWORD +
+                           "\".");
+    logs_screen.addLogLine("After connecting, please go to http://depmon.local to continue setup.");
 
     this_thread::sleep_for(5s);
 
-    LogsScreen::switchTo(LV_SCR_LOAD_ANIM_FADE_ON);
-
-    // Ideas to test what constrains this loop:
-    // Have a single label that is updated with the current time, so that less
-    // of the screen is updated. Film with slow mo.
+    departures_screen.switchTo();
     for (int i = 0; i < 20; i++) {
-        LogsScreen::addLogLine("Test " + to_string(SDL_GetTicks()));
-        this_thread::sleep_for(100ms);
-    }
-
-    DeparturesScreen::switchTo(LV_SCR_LOAD_ANIM_OVER_LEFT);
-
-    for (int i = 0; i < 20; i++) {
-        DeparturesScreen::addRandomDepartureItem();
-        this_thread::sleep_for(100ms);
+        departures_screen.addRandomDepartureItem();
     }
 
     while (true) {

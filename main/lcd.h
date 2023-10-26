@@ -1,3 +1,7 @@
+// TODO The following should be handled via menuconfig, but they're missing in the KConfig :/
+#define LV_ATTRIBUTE_TIMER_HANDLER IRAM_ATTR
+#define LV_ATTRIBUTE_TIMER_HANDLER IRAM_ATTR
+
 #include <driver/gpio.h>
 #include <driver/i2c.h>
 #include <driver/spi_master.h>
@@ -14,7 +18,7 @@
 #include <freertos/task.h>
 #include <mutex>
 
-#include "ui_interaction.hpp"
+#include "ui.hpp"
 
 /* LCD size */
 #define LCD_ST7796_H_RES (480)
@@ -190,9 +194,11 @@ static esp_err_t app_lvgl_init(void) {
     /* Initialize LVGL */
     lv_init();
 
-    esp_register_freertos_tick_hook(lvgl_port_tick_increment);
+    ESP_RETURN_ON_ERROR(esp_register_freertos_tick_hook(lvgl_port_tick_increment), TAG,
+                        "Failed to register lvgl tick callback");
     ESP_RETURN_ON_FALSE(xTaskCreatePinnedToCore(timer_task, "lvgl_timer", 4096, NULL, 4, NULL, 0) == pdPASS, 127, TAG,
                         "%s", "Failed to create lvgl_timer task");
+
 
     /* Add LCD screen */
     ESP_LOGD(TAG, "Add LCD screen");
@@ -217,6 +223,7 @@ static esp_err_t app_lvgl_init(void) {
     lvgl_disp = lvgl_port_add_disp(&disp_cfg);
 
     /* Add touch input (for selected screen) */
+    ESP_LOGD(TAG, "Add touch input");
     const lvgl_port_touch_cfg_t touch_cfg = {
         .disp = lvgl_disp,
         .handle = touch_handle,

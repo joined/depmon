@@ -9,7 +9,7 @@
 #include <unistd.h>
 
 #include "lvgl.h"
-#include "ui_interaction.hpp"
+#include "ui.hpp"
 
 namespace LVGL_SDL {
 
