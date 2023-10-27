@@ -26,6 +26,8 @@ static EventGroupHandle_t wifi_event_group;
 using namespace std::chrono_literals;
 using namespace std;
 
+// TODO We're using the `TAG` from lcd.h, fix that
+
 /* Event handler for catching system events */
 static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data) {
     static int retries;
