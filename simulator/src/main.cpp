@@ -15,17 +15,18 @@ int main(void) {
 
     UIManager::init();
 
-    this_thread::sleep_for(2s);
+    // this_thread::sleep_for(2s);
 
-    logs_screen.switchTo();
-    logs_screen.addLogLine("It looks like you're trying to set up your device.");
-    logs_screen.addLogLine("Please scan the following QR code to connect to the device:");
-    logs_screen.addQRCode(PROVISIONING_QR_CODE_DATA);
-    logs_screen.addLogLine("Alternatively, connect to the network \"" + AP_SSID + "\" with password \"" + AP_PASSWORD +
-                           "\".");
-    logs_screen.addLogLine("After connecting, please go to http://depmon.local to continue setup.");
+    // logs_screen.switchTo();
+    // logs_screen.addLogLine("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec a diam lectus. Sed sit amet ipsum mauris.");
+    // logs_screen.addQRCode("LoremIpsumDolorSitAmet");
+    // logs_screen.addLogLine("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec a diam lectus. Sed sit amet ipsum mauris.");
+    // logs_screen.addLogLine("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec a diam lectus. Sed sit amet ipsum mauris.");
+    // logs_screen.addLogLine("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec a diam lectus. Sed sit amet ipsum mauris.");
+    // logs_screen.addLogLine("Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec a diam lectus. Sed sit amet ipsum mauris.");
+    // logs_screen.addLogLine("L o r e m i p s u m d o l o r s i t a m e t, c o n s e c t e t u r a d i p i s c i n g e l i t. D o n e c a d i a m l e c t u s. S e d s i t a m e t i p s u m m a u r i s.");
 
-    this_thread::sleep_for(5s);
+    // this_thread::sleep_for(5s);
 
     departures_screen.switchTo();
     for (int i = 0; i < 20; i++) {
