@@ -1,8 +1,8 @@
-#ifndef UI_HPP
-#define UI_HPP
+#pragma once
 
 #include <mutex>
 #include <string>
+#include "lvgl.h"
 
 using namespace std;
 
@@ -63,16 +63,23 @@ class SplashScreen : public Screen {
         lv_obj_set_style_bg_color(screen, Color::black, LV_PART_MAIN | LV_STATE_DEFAULT);
 
         title = lv_label_create(screen);
-        lv_obj_set_y(title, -23);
+        lv_obj_set_y(title, -40);
         lv_obj_set_align(title, LV_ALIGN_CENTER);
         lv_label_set_text(title, "DepMon");
         lv_obj_set_style_text_color(title, Color::white, LV_PART_MAIN | LV_STATE_DEFAULT);
         lv_obj_set_style_text_font(title, &robotocondensedregular96, LV_PART_MAIN | LV_STATE_DEFAULT);
 
+        status = lv_label_create(screen);
+        lv_obj_set_y(status, -30);
+        lv_obj_set_align(status, LV_ALIGN_BOTTOM_MID);
+        lv_label_set_text(status, "Booting up...");
+        lv_obj_set_style_text_color(status, Color::white, LV_PART_MAIN | LV_STATE_DEFAULT);
+        lv_obj_set_style_text_font(status, &robotocondensedregular16, LV_PART_MAIN | LV_STATE_DEFAULT);
+
         spinner = lv_spinner_create(screen, 1000, 90);
         lv_obj_set_width(spinner, 50);
         lv_obj_set_height(spinner, 51);
-        lv_obj_set_y(spinner, 73);
+        lv_obj_set_y(spinner, 60);
         lv_obj_set_align(spinner, LV_ALIGN_CENTER);
 
         lv_obj_set_style_arc_color(spinner, Color::yellow, LV_PART_INDICATOR | LV_STATE_DEFAULT);
@@ -80,6 +87,7 @@ class SplashScreen : public Screen {
 
   private:
     lv_obj_t *title = nullptr;
+    lv_obj_t *status = nullptr;
     lv_obj_t *spinner = nullptr;
 };
 
@@ -254,5 +262,3 @@ void init() {
 };
 
 } // namespace UIManager
-
-#endif // UI_HPP

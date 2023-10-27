@@ -195,7 +195,6 @@ static esp_err_t app_lvgl_init(void) {
     ESP_RETURN_ON_FALSE(xTaskCreatePinnedToCore(timer_task, "lvgl_timer", 4096, NULL, 4, NULL, 0) == pdPASS, 127, TAG,
                         "%s", "Failed to create lvgl_timer task");
 
-
     /* Add LCD screen */
     ESP_LOGD(TAG, "Add LCD screen");
     const lvgl_port_display_cfg_t disp_cfg = {
