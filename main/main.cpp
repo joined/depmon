@@ -165,8 +165,6 @@ extern "C" void app_main(void) {
     /* Let's find out if the device is provisioned */
     ESP_ERROR_CHECK(wifi_prov_mgr_is_provisioned(&provisioned));
 
-    logs_screen.switchTo();
-
     if (!provisioned) {
         ESP_LOGI(TAG, "Starting provisioning");
 
@@ -174,13 +172,15 @@ extern "C" void app_main(void) {
         get_provisioning_ssid(service_name, sizeof(service_name));
 
         ESP_ERROR_CHECK(wifi_prov_mgr_start_provisioning(WIFI_PROV_SECURITY_0, nullptr, service_name, nullptr));
+        // TODO Probably show these instructions in a dedicated screen, it doesn't look great on the logs screen
         logs_screen.addLogLine("It looks like you're trying to set up your device.");
         logs_screen.addLogLine("Please download the ESP SoftAP Provisioning app from the App Store or Google Play, "
                                "open it and follow the instructions.");
         wifi_prov_print_qr(service_name);
+        logs_screen.switchTo();
     } else {
         ESP_LOGI(TAG, "Already provisioned, starting Wi-Fi STA");
-        logs_screen.addLogLine("Connecting to WiFi...");
+        splash_screen.updateStatus("Connecting to WiFi...");
 
         /* We don't need the manager as device is already provisioned,
          * so let's release it's resources */
@@ -193,7 +193,12 @@ extern "C" void app_main(void) {
     /* Wait for Wi-Fi connection */
     xEventGroupWaitBits(wifi_event_group, WIFI_CONNECTED_EVENT, true, true, portMAX_DELAY);
 
-    logs_screen.addLogLine("Connected to WiFi! Switching to departures board...");
+    if (provisioned) {
+        splash_screen.updateStatus("Connected! Switching to departures screen...");
+    } else { 
+        logs_screen.addLogLine("Connected to WiFi! Switching to departures board...");
+    }
+
     this_thread::sleep_for(2s);
 
     departures_screen.switchTo();

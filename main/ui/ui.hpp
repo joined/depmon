@@ -87,6 +87,13 @@ class SplashScreen : public Screen {
         lv_obj_set_style_arc_color(spinner, Color::yellow, (uint32_t)LV_PART_INDICATOR | (uint16_t)LV_STATE_DEFAULT);
     };
 
+    void updateStatus(const string &message) {
+        if (status != nullptr) {
+            const lock_guard<recursive_mutex> lock(lvgl_mutex);
+            lv_label_set_text(status, message.c_str());
+        }
+    }
+
   private:
     lv_obj_t *title = nullptr;
     lv_obj_t *status = nullptr;
