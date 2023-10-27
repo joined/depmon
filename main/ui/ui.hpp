@@ -158,8 +158,6 @@ class DeparturesScreen : public Screen {
         lv_obj_set_style_bg_color(screen, Color::black, LV_PART_MAIN | LV_STATE_DEFAULT);
 
         line = lv_label_create(screen);
-        lv_obj_set_width(line, LV_SIZE_CONTENT);
-        lv_obj_set_height(line, LV_SIZE_CONTENT);
         lv_obj_set_x(line, 20);
         lv_obj_set_y(line, 7);
         lv_label_set_text(line, "Linie");
@@ -233,9 +231,9 @@ class DeparturesScreen : public Screen {
     };
 };
 
-SplashScreen splash_screen;
-LogsScreen logs_screen;
-DeparturesScreen departures_screen;
+static SplashScreen splash_screen;
+static LogsScreen logs_screen;
+static DeparturesScreen departures_screen;
 
 namespace UIManager {
 
