@@ -1,8 +1,12 @@
 name: CI
+
 on: [push]
+
+env:
+  ESP_IDF_VERSION: v5.1
+
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
@@ -10,9 +14,13 @@ jobs:
       uses: actions/checkout@v2
       with:
         submodules: 'recursive'
+    - name: Cache Docker images.
+      uses: ScribeMD/docker-cache@0.3.6
+      with:
+        key: docker-${{ runner.os }}-${{ env.ESP_IDF_VERSION }}
     - name: esp-idf build
       uses: espressif/esp-idf-ci-action@v1
       with:
-        esp_idf_version: v5.1
+        esp_idf_version: ${{ env.ESP_IDF_VERSION }}
         target: esp32
         path: '.'
