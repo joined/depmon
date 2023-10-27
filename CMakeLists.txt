@@ -14,4 +14,7 @@ idf_build_set_property(COMPILE_OPTIONS "-Wno-missing-field-initializers" APPEND)
 idf_build_set_property(COMPILE_OPTIONS "-DLV_ATTRIBUTE_TIMER_HANDLER=IRAM_ATTR" APPEND)
 idf_build_set_property(COMPILE_OPTIONS "-DLV_ATTRIBUTE_TICK_INC=IRAM_ATTR" APPEND)
 
+# For the fonts
+idf_build_set_property(COMPILE_OPTIONS "-DLV_LVGL_H_INCLUDE_SIMPLE" APPEND)
+
 project(bvg_departures)
