@@ -1,7 +1,3 @@
-// TODO The following should be handled via menuconfig, but they're missing in the KConfig :/
-#define LV_ATTRIBUTE_TIMER_HANDLER IRAM_ATTR
-#define LV_ATTRIBUTE_TIMER_HANDLER IRAM_ATTR
-
 #include <driver/gpio.h>
 #include <driver/i2c.h>
 #include <driver/spi_master.h>
