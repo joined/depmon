@@ -193,9 +193,14 @@ extern "C" void app_main(void) {
     /* Wait for Wi-Fi connection */
     xEventGroupWaitBits(wifi_event_group, WIFI_CONNECTED_EVENT, true, true, portMAX_DELAY);
 
+    ESP_ERROR_CHECK(mdns_init());
+    ESP_ERROR_CHECK(mdns_hostname_set("depmon"));
+    ESP_ERROR_CHECK(mdns_instance_name_set("DepMon"));
+    ESP_ERROR_CHECK(mdns_service_add("DepMon Configuration Server", "_http", "_tcp", 80, NULL, 0));
+
     if (provisioned) {
         splash_screen.updateStatus("Connected! Switching to departures screen...");
-    } else { 
+    } else {
         logs_screen.addLogLine("Connected to WiFi! Switching to departures board...");
     }
 
@@ -206,5 +211,5 @@ extern "C" void app_main(void) {
         departures_screen.addRandomDepartureItem();
     }
 
-    // setup_http_server();
+    setup_http_server();
 }
