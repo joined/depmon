@@ -4,6 +4,7 @@
 
 from pathlib import Path
 import shutil
+from typing import Literal
 
 frontend_build_folder = Path("frontend/dist")
 component_folder = Path("components/http_server")
@@ -41,40 +42,48 @@ def get_embed_files_cmake_content(files_to_embed: list[Path]):
     )
 
 
-def get_blob_variable_name(file: Path):
-    return f"{file.stem.replace('.', '')}Data"
+def get_blob_variable_name(file: Path, typ: str):
+    return f"{file.stem.replace('.', '')}Data{typ.capitalize()}"
 
 
 def get_handler_name_for_file(file: Path):
-    return f"{file.stem.replace('.', '')}Handler"
+    name = "".join([part.capitalize() for part in file.stem.split(".")])
+    return f"{name}Handler"
 
 
-def get_blob_declaration(file: Path):
-    asm_name = f"_binary_{file.name.replace('.', '_')}_start"
-    return f'extern const char {get_blob_variable_name(file)}[] asm("{asm_name}");'
+def get_blob_declaration(file: Path, typ: Literal["start", "end"]):
+    asm_name = f"_binary_{file.name.replace('.', '_')}_{typ}"
+    return f'extern const char {get_blob_variable_name(file, typ)}[] asm("{asm_name}");'
 
 
 def get_content_type_for_file(file: Path):
-    if file.suffix == ".js":
+    filename = file.name
+    if filename.endswith(".gz"):
+        filename = filename[:-3]
+
+    if filename.endswith(".js"):
         return "text/javascript"
-    elif file.suffix == ".css":
+    elif filename.endswith(".css"):
         return "text/css"
-    elif file.suffix == ".html":
+    elif filename.endswith(".html"):
         return "text/html"
     else:
         raise Exception(f"Unknown file type {file}")
 
 
 def get_handler_declaration(file: Path):
-    uri = f"/{file.name}" if file.name != "index.html" else "/"
-    blob_name = get_blob_variable_name(file)
+    uri = f"/{file.name.rstrip('.gz')}" if file.name.rstrip('.gz') != "index.html" else "/"
+    blob_name_start, blob_name_end = [
+        get_blob_variable_name(file, typ) for typ in ("start", "end")
+    ]
     return "\n".join(
         [
-            f'httpd_uri_t {get_handler_name_for_file(file)} = '
+            f"httpd_uri_t {get_handler_name_for_file(file)} = "
             f'{{.uri = "{uri}", .method = HTTP_GET, .handler = [](httpd_req_t *req) {{',
             f'                                       ESP_LOGI("HTTPD", "GET request received for {uri}");',
+            '                                        httpd_resp_set_hdr(req, "Content-Encoding", "gzip");',
             f'                                       httpd_resp_set_type(req, "{get_content_type_for_file(file)}");',
-            f"                                      return httpd_resp_send(req, {blob_name}, HTTPD_RESP_USE_STRLEN);",
+            f"                                       return httpd_resp_send(req, {blob_name_start}, {blob_name_end} - {blob_name_start});",
             "                                 }};",
         ]
     )
@@ -88,7 +97,12 @@ def get_static_routes_header_content(files_to_embed: list[Path]):
         "#pragma once\n\n"
         "#include <esp_http_server.h>\n"
         "#include <esp_log.h>\n\n"
-        + "\n".join([get_blob_declaration(file) for file in files_to_embed])
+        + "\n".join(
+            [
+                f"{get_blob_declaration(file, 'start')}\n{get_blob_declaration(file, 'end')}"
+                for file in files_to_embed
+            ]
+        )
         + "\n\n"
         + "\n".join([get_handler_declaration(file) for file in files_to_embed])
         + "\n\n"
@@ -107,7 +121,10 @@ if __name__ == "__main__":
     relevant_files = [
         file
         for file in frontend_build_folder.glob("*.*")
-        if file.is_file() and file.suffix in [".js", ".css", ".html"]
+        if file.is_file()
+        and any(
+            file.name.endswith(suffix) for suffix in [".js.gz", ".css.gz", ".html.gz"]
+        )
     ]
 
     create_target_folder_and_clean_it_up()
