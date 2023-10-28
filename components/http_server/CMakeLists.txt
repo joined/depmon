@@ -14,4 +14,4 @@ include(${SOURCE_EMBEDDED_FILES_CMAKE_PATH})
 idf_component_register(SRCS http_server.cpp
                        INCLUDE_DIRS include
                        REQUIRES esp_http_server
-                       EMBED_TXTFILES ${FRONTEND_FILES_TO_EMBED})
+                       EMBED_FILES ${FRONTEND_FILES_TO_EMBED})
