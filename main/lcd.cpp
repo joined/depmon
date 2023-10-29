@@ -14,7 +14,7 @@
 #include <freertos/task.h>
 #include <mutex>
 
-#include "ui.hpp"
+#include "lcd.hpp"
 
 /* LCD size */
 #define LCD_ST7796_H_RES (480)
@@ -48,6 +48,8 @@
 #define TOUCH_GT911_GPIO_INT (GPIO_NUM_21)
 
 static const char *TAG = "LCD";
+
+extern std::recursive_mutex lvgl_mutex;
 
 /* LCD IO and panel */
 static esp_lcd_panel_io_handle_t lcd_io = NULL;
@@ -229,7 +231,7 @@ static esp_err_t app_lvgl_init(void) {
     return ESP_OK;
 }
 
-static esp_err_t init(void) {
+esp_err_t init(void) {
     /* LCD HW initialization */
     ESP_ERROR_CHECK(app_lcd_init());
 

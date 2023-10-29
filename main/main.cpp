@@ -1,25 +1,28 @@
 #include <ArduinoJson.h>
 #include <chrono>
 #include <esp_http_client.h>
+#include <esp_log.h>
 #include <esp_mac.h>
 #include <esp_spiffs.h>
 #include <esp_timer.h>
 #include <esp_wifi.h>
 #include <freertos/event_groups.h>
-#include <mdns.h>
 #include <lwip/apps/netbiosns.h>
+#include <mdns.h>
 #include <nvs_flash.h>
 #include <thread>
 #include <wifi_provisioning/manager.h>
 #include <wifi_provisioning/scheme_softap.h>
 
 #include "http_server.hpp"
-#include "lcd.h"
+#include "lcd.hpp"
 #include "ui.hpp"
 
 /* Signal Wi-Fi events on this event-group */
 const int WIFI_CONNECTED_EVENT = BIT0;
 static EventGroupHandle_t wifi_event_group;
+
+static const char *TAG = "DEPMON";
 
 #define PROV_QR_VERSION "v1"
 #define PROV_TRANSPORT_SOFTAP "softap"
@@ -27,8 +30,6 @@ static EventGroupHandle_t wifi_event_group;
 
 using namespace std::chrono_literals;
 using namespace std;
-
-// TODO We're using the `TAG` from lcd.h, fix that
 
 /* Event handler for catching system events */
 static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data) {
