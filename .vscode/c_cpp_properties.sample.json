@@ -3,7 +3,7 @@
         {
             "name": "ESP-IDF",
             "cStandard": "c11",
-            "cppStandard": "c++17",
+            "cppStandard": "c++23",
             // Replace with your compiler path
             "compilerPath": "/home/myusername/.espressif/tools/xtensa-esp32-elf/esp-12.2.0_20230208/xtensa-esp32-elf/bin/xtensa-esp32-elf-gcc",
             "includePath": [
