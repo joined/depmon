@@ -1,8 +1,12 @@
 #include <esp_http_server.h>
 #include <esp_log.h>
+#include <esp_random.h>
+#include <esp_system.h>
+#include <esp_app_desc.h>
 #include <esp_vfs.h>
 #include <fcntl.h>
 #include <string>
+#include <cJSON.h>
 
 #include "http_server.hpp"
 
@@ -96,12 +100,37 @@ static esp_err_t rest_common_get_handler(httpd_req_t *req) {
     return ESP_OK;
 }
 
+/* Simple handler for getting temperature data */
+static esp_err_t api_get_version_handler(httpd_req_t *req)
+{
+    httpd_resp_set_type(req, "application/json");
+    cJSON *root = cJSON_CreateObject();
+    const esp_app_desc_t *app_description = esp_app_get_description();
+    cJSON_AddStringToObject(root, "version", app_description->version);
+    cJSON_AddStringToObject(root, "idf_version", app_description->idf_ver);
+    cJSON_AddStringToObject(root, "project_name", app_description->project_name);
+    cJSON_AddStringToObject(root, "compile_time", app_description->time);
+    cJSON_AddStringToObject(root, "compile_date", app_description->date);
+    const std::string app_description_str = cJSON_Print(root);
+    httpd_resp_sendstr(req, app_description_str.c_str());
+    cJSON_Delete(root);
+    return ESP_OK;
+}
+
 httpd_handle_t setup_http_server() {
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     config.uri_match_fn = httpd_uri_match_wildcard;
     httpd_handle_t server = NULL;
 
     ESP_ERROR_CHECK(httpd_start(&server, &config));
+
+    /* API URI handler for getting app version */
+    httpd_uri_t api_get_version_uri = {
+        .uri = "/api/version",
+        .method = HTTP_GET,
+        .handler = api_get_version_handler,
+    };
+    httpd_register_uri_handler(server, &api_get_version_uri);
 
     /* URI handler for getting web server files */
     httpd_uri_t common_get_uri = {
