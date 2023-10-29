@@ -3,8 +3,6 @@
 
 Import("env", "projenv")
 
-# TODO Can we remove unused targets?
-
 exec_name = "${BUILD_DIR}/${PROGNAME}${PROGSUFFIX}"
 
 # Override unused "upload" to execute compiled binary

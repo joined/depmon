@@ -211,7 +211,6 @@ extern "C" void app_main(void) {
         get_provisioning_ssid(service_name, sizeof(service_name));
 
         ESP_ERROR_CHECK(wifi_prov_mgr_start_provisioning(WIFI_PROV_SECURITY_0, nullptr, service_name, nullptr));
-        // TODO Probably show these instructions in a dedicated screen, it doesn't look great on the logs screen
         logs_screen.addLogLine("It looks like you're trying to set up your device.");
         logs_screen.addLogLine("Please download the ESP SoftAP Provisioning app from the App Store or Google Play, "
                                "open it and follow the instructions.");
