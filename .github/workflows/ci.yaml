@@ -25,12 +25,6 @@ jobs:
         cd frontend
         yarn install
         yarn build
-    - name: Install python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.12'
-    - name: Generate server embeds
-      run: python generate_server_embeds.py
     - name: Cache esp-idf build
       uses: actions/cache@v3
       with:
