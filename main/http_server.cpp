@@ -18,11 +18,6 @@ static char scratch[SCRATCH_BUFSIZE];
 
 static const char *TAG = "http_server";
 
-// TODO We should probably switch to async request handling, but it's only available
-// in the `master` branch of ESP-IDF at the moment:
-// https://github.com/espressif/esp-idf/tree/master/examples/protocols/http_server/async_handlers
-// If we do switch, we need different scratch buffers for each request, I guess.
-
 /* Set HTTP response content type according to file extension */
 static esp_err_t set_content_type_from_file(httpd_req_t *req, const std::string &filepath) {
     const std::string cleaned_filepath =

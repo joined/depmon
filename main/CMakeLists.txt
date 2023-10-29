@@ -6,8 +6,6 @@ idf_component_register(
     PRIV_REQUIRES esp_wifi esp_http_client esp_http_server nvs_flash wifi_provisioning spiffs vfs json esp_app_format
 )
 
-# TODO Build frontend in here? See https://github.com/skot/ESP-Miner/blob/master/main/CMakeLists.txt
-
 set(WEB_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../frontend")
 if(EXISTS ${WEB_SRC_DIR}/dist)
     spiffs_create_partition_image(www ${WEB_SRC_DIR}/dist FLASH_IN_PROJECT)
