@@ -21,7 +21,7 @@
 const int WIFI_CONNECTED_EVENT = BIT0;
 static EventGroupHandle_t wifi_event_group;
 
-static const char *TAG = "DEPMON";
+static const char *TAG = "MAIN";
 
 #define PROV_MGR_MAX_RETRY_COUNT 3
 
