@@ -28,11 +28,11 @@ jobs:
     - name: Cache esp-idf build
       uses: actions/cache@v3
       with:
-        path: "build"
+        path: "esp/build"
         key: ${{ runner.os }}-build-v2
     - name: esp-idf build
       uses: espressif/esp-idf-ci-action@v1
       with:
         esp_idf_version: ${{ env.ESP_IDF_VERSION }}
         target: esp32
-        path: '.'
+        path: 'esp'
