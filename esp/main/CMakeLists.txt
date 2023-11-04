@@ -1,7 +1,7 @@
 file(GLOB_RECURSE FONT_SRCS ui/fonts/*.c)
 
 idf_component_register(
-    SRCS "lcd.cpp" "main.cpp" "http_server.cpp" ${FONT_SRCS}
+    SRCS "lcd.cpp" "main.cpp" "http_server.cpp" "ui/ui.cpp" ${FONT_SRCS}
     INCLUDE_DIRS "." "ui"
     PRIV_REQUIRES esp_wifi esp_http_client esp_http_server nvs_flash wifi_provisioning spiffs vfs json esp_app_format
 )
