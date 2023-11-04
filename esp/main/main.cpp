@@ -94,13 +94,7 @@ static void network_event_handler(void *arg, esp_event_base_t event_base, int32_
     }
 }
 
-static void wifi_init_sta(void) {
-    /* Start Wi-Fi in station mode */
-    ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
-    ESP_ERROR_CHECK(esp_wifi_start());
-}
-
-static void initialize_mdns_and_netbios(void) {
+static void init_mdns_and_netbios(void) {
     ESP_ERROR_CHECK(mdns_init());
     ESP_ERROR_CHECK(mdns_hostname_set("depmon"));
     ESP_ERROR_CHECK(mdns_instance_name_set("DepMon"));
@@ -145,17 +139,12 @@ static void wifi_prov_print_qr(const char *name) {
     logs_screen.addQRCode(payload);
 }
 
-extern "C" void app_main(void) {
-    LVGL_LCD::init();
-    UIManager::init();
-
-    init_nvs();
-
+void init_network_wifi_and_wifimanager() {
     /* Initialize TCP/IP */
     ESP_ERROR_CHECK(esp_netif_init());
 
-    // Create the default event loop
-    ESP_ERROR_CHECK(esp_event_loop_create_default());
+    init_mdns_and_netbios();
+
     wifi_event_group = xEventGroupCreate();
 
     /* Register our event handlers for Wi-Fi/IP related events */
@@ -175,6 +164,44 @@ extern "C" void app_main(void) {
 
     /* Initialize provisioning manager with the configuration parameters set above */
     ESP_ERROR_CHECK(wifi_prov_mgr_init(config));
+}
+
+QueueHandle_t departuresRefreshQueue = xQueueCreate(1, sizeof(uint8_t));
+
+void DeparturesRefresherTask(void *pvParameter) {
+    uint8_t message;
+
+    while (true) {
+        if (xQueueReceive(departuresRefreshQueue, &message, 0) == pdPASS) {
+            departures_screen.clean();
+            for (int i = 0; i < 5; i++) {
+                departures_screen.addRandomDepartureItem();
+            }
+        }
+        this_thread::sleep_for(10ms);
+    }
+}
+
+const esp_timer_create_args_t departuresRefresherTimerArgs = {
+    .callback =
+        [](void *arg) {
+            uint8_t message = 1;
+            xQueueSend(departuresRefreshQueue, &message, 0);
+        },
+    .name = "departuresRefreshTimer",
+};
+
+esp_timer_handle_t departuresRefreshTimerHandle = nullptr;
+
+extern "C" void app_main(void) {
+    ESP_ERROR_CHECK(esp_event_loop_create_default());
+
+    LVGL_LCD::init();
+    UIManager::init();
+
+    init_nvs();
+    init_network_wifi_and_wifimanager();
+    xTaskCreate(DeparturesRefresherTask, "DeparturesRefresherTask", 3072, NULL, 1, NULL);
 
     bool provisioned = false;
     /* Let's find out if the device is provisioned */
@@ -196,18 +223,16 @@ extern "C" void app_main(void) {
         ESP_LOGI(TAG, "Already provisioned, starting Wi-Fi STA");
         splash_screen.updateStatus("Connecting to WiFi...");
 
-        /* We don't need the manager as device is already provisioned,
-         * so let's release it's resources */
+        /* We don't need the manager as device is already provisioned, so let's release it's resources */
         wifi_prov_mgr_deinit();
 
-        /* Start Wi-Fi station */
-        wifi_init_sta();
+        /* Start Wi-Fi in station mode */
+        ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+        ESP_ERROR_CHECK(esp_wifi_start());
     }
 
     /* Wait for Wi-Fi connection */
     xEventGroupWaitBits(wifi_event_group, WIFI_CONNECTED_EVENT, true, true, portMAX_DELAY);
-
-    initialize_mdns_and_netbios();
 
     if (provisioned) {
         splash_screen.updateStatus("Connected! Switching to departures screen...");
@@ -217,10 +242,9 @@ extern "C" void app_main(void) {
 
     this_thread::sleep_for(2s);
 
-    departures_screen.switchTo();
-    for (int i = 0; i < 20; i++) {
-        departures_screen.addRandomDepartureItem();
-    }
-
     setup_http_server();
-}
+
+    departures_screen.switchTo();
+    ESP_ERROR_CHECK(esp_timer_create(&departuresRefresherTimerArgs, &departuresRefreshTimerHandle));
+    ESP_ERROR_CHECK(esp_timer_start_periodic(departuresRefreshTimerHandle, duration_cast<chrono::microseconds>(1s).count()));
+};
