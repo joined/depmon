@@ -2,7 +2,6 @@
 #include <esp_http_client.h>
 #include <esp_log.h>
 #include <esp_mac.h>
-#include <esp_spiffs.h>
 #include <esp_timer.h>
 #include <esp_wifi.h>
 #include <freertos/event_groups.h>
@@ -28,8 +27,7 @@ static const char *TAG = "MAIN";
 using namespace std::chrono_literals;
 using namespace std;
 
-/* Event handler for catching system events */
-static void event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data) {
+static void network_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data) {
     static int retries;
     if (event_base == WIFI_PROV_EVENT) {
         switch (event_id) {
@@ -102,41 +100,28 @@ static void wifi_init_sta(void) {
     ESP_ERROR_CHECK(esp_wifi_start());
 }
 
-static void initialize_mdns(void) {
-    mdns_init();
-    mdns_hostname_set("depmon");
-    mdns_instance_name_set("DepMon");
+static void initialize_mdns_and_netbios(void) {
+    ESP_ERROR_CHECK(mdns_init());
+    ESP_ERROR_CHECK(mdns_hostname_set("depmon"));
+    ESP_ERROR_CHECK(mdns_instance_name_set("DepMon"));
 
     mdns_txt_item_t serviceTxtData[] = {{"board", "esp32"}, {"path", "/"}};
-
     ESP_ERROR_CHECK(mdns_service_add("DepMon Configuration Server", "_http", "_tcp", 80, serviceTxtData,
                                      sizeof(serviceTxtData) / sizeof(serviceTxtData[0])));
+
+    netbiosns_init();
+    netbiosns_set_name("depmon");
 }
 
-esp_err_t init_fs(void) {
-    esp_vfs_spiffs_conf_t conf = {
-        .base_path = "/www", .partition_label = NULL, .max_files = 5, .format_if_mount_failed = false};
-    esp_err_t ret = esp_vfs_spiffs_register(&conf);
-
-    if (ret != ESP_OK) {
-        if (ret == ESP_FAIL) {
-            ESP_LOGE(TAG, "Failed to mount or format filesystem");
-        } else if (ret == ESP_ERR_NOT_FOUND) {
-            ESP_LOGE(TAG, "Failed to find SPIFFS partition");
-        } else {
-            ESP_LOGE(TAG, "Failed to initialize SPIFFS (%s)", esp_err_to_name(ret));
-        }
-        return ESP_FAIL;
+static void init_nvs() {
+    /* Initialize NVS partition */
+    esp_err_t ret = nvs_flash_init();
+    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+        /* NVS partition was truncated and needs to be erased */
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        /* Retry nvs_flash_init */
+        ESP_ERROR_CHECK(nvs_flash_init());
     }
-
-    size_t total = 0, used = 0;
-    ret = esp_spiffs_info(NULL, &total, &used);
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to get SPIFFS partition information (%s)", esp_err_to_name(ret));
-    } else {
-        ESP_LOGI(TAG, "Partition size: total: %d, used: %d", total, used);
-    }
-    return ESP_OK;
 }
 
 /** Will have format `PROV_2A3B4C` */
@@ -164,14 +149,7 @@ extern "C" void app_main(void) {
     LVGL_LCD::init();
     UIManager::init();
 
-    /* Initialize NVS partition */
-    esp_err_t ret = nvs_flash_init();
-    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-        /* NVS partition was truncated and needs to be erased */
-        ESP_ERROR_CHECK(nvs_flash_erase());
-        /* Retry nvs_flash_init */
-        ESP_ERROR_CHECK(nvs_flash_init());
-    }
+    init_nvs();
 
     /* Initialize TCP/IP */
     ESP_ERROR_CHECK(esp_netif_init());
@@ -181,9 +159,9 @@ extern "C" void app_main(void) {
     wifi_event_group = xEventGroupCreate();
 
     /* Register our event handlers for Wi-Fi/IP related events */
-    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_PROV_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL));
-    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &event_handler, NULL));
-    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &event_handler, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_PROV_EVENT, ESP_EVENT_ANY_ID, &network_event_handler, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &network_event_handler, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &network_event_handler, NULL));
 
     /* Initialize Wi-Fi including netif with default config */
     esp_netif_create_default_wifi_sta();
@@ -229,11 +207,7 @@ extern "C" void app_main(void) {
     /* Wait for Wi-Fi connection */
     xEventGroupWaitBits(wifi_event_group, WIFI_CONNECTED_EVENT, true, true, portMAX_DELAY);
 
-    initialize_mdns();
-    netbiosns_init();
-    netbiosns_set_name("depmon");
-
-    ESP_ERROR_CHECK(init_fs());
+    initialize_mdns_and_netbios();
 
     if (provisioned) {
         splash_screen.updateStatus("Connected! Switching to departures screen...");
