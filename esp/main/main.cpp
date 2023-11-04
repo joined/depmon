@@ -23,8 +23,6 @@ static EventGroupHandle_t wifi_event_group;
 
 static const char *TAG = "DEPMON";
 
-#define PROV_QR_VERSION "v1"
-#define PROV_TRANSPORT_SOFTAP "softap"
 #define PROV_MGR_MAX_RETRY_COUNT 3
 
 using namespace std::chrono_literals;
@@ -158,7 +156,7 @@ static void wifi_prov_print_qr(const char *name) {
     snprintf(payload, sizeof(payload),
              "{\"ver\":\"%s\",\"name\":\"%s\""
              ",\"transport\":\"%s\"}",
-             PROV_QR_VERSION, name, PROV_TRANSPORT_SOFTAP);
+             "v1", name, "softap");
     logs_screen.addQRCode(payload);
 }
 
