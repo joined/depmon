@@ -3,7 +3,7 @@ file(GLOB_RECURSE FONT_SRCS ui/fonts/*.c)
 idf_component_register(
     SRCS "lcd.cpp" "main.cpp" "http_server.cpp" "ui/ui.cpp" ${FONT_SRCS}
     INCLUDE_DIRS "." "ui"
-    PRIV_REQUIRES esp_wifi esp_http_client esp_http_server nvs_flash wifi_provisioning spiffs vfs json esp_app_format
+    PRIV_REQUIRES esp_app_format esp_http_client esp_http_server esp_timer esp_wifi json nvs_flash spiffs vfs wifi_provisioning
 )
 
 set(WEB_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../frontend")
