@@ -1,3 +1,4 @@
+#include <ArduinoJson.h>
 #include <chrono>
 #include <esp_http_client.h>
 #include <esp_log.h>
@@ -8,13 +9,16 @@
 #include <lwip/apps/netbiosns.h>
 #include <mdns.h>
 #include <nvs_flash.h>
+#include <sys/param.h>
 #include <thread>
 #include <wifi_provisioning/manager.h>
 #include <wifi_provisioning/scheme_softap.h>
 
+#include "bvg_api_client.hpp"
 #include "http_server.hpp"
 #include "lcd.hpp"
 #include "ui.hpp"
+#include "utils.hpp"
 
 /* Signal Wi-Fi events on this event-group */
 const int WIFI_CONNECTED_EVENT = BIT0;
@@ -25,9 +29,8 @@ static const char *TAG = "MAIN";
 #define PROV_MGR_MAX_RETRY_COUNT 3
 
 using namespace std::chrono_literals;
-using namespace std;
 
-static void network_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data) {
+static void provisioning_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data) {
     static int retries;
     if (event_base == WIFI_PROV_EVENT) {
         switch (event_id) {
@@ -119,23 +122,19 @@ static void init_nvs() {
 }
 
 /** Will have format `PROV_2A3B4C` */
-static void get_provisioning_ssid(char *service_name, size_t max) {
+std::string getProvisioningSSID() {
     uint8_t eth_mac[6];
-    const char *ssid_prefix = "PROV_";
     esp_wifi_get_mac(WIFI_IF_STA, eth_mac);
-    snprintf(service_name, max, "%s%02X%02X%02X", ssid_prefix, eth_mac[3], eth_mac[4], eth_mac[5]);
-}
 
-static void wifi_prov_print_qr(const char *name) {
-    if (!name) {
-        ESP_LOGW(TAG, "Cannot generate QR code payload. Data missing.");
-        return;
-    }
-    char payload[150] = {0};
-    snprintf(payload, sizeof(payload),
-             "{\"ver\":\"%s\",\"name\":\"%s\""
-             ",\"transport\":\"%s\"}",
-             "v1", name, "softap");
+    const std::string ssid_prefix = "PROV_";
+    char service_name[12];
+    snprintf(service_name, sizeof(service_name), "%s%02X%02X%02X", ssid_prefix.c_str(), eth_mac[3], eth_mac[4], eth_mac[5]);
+
+    return std::string(service_name);
+};
+
+static void wifi_prov_print_qr(const std::string &name) {
+    const std::string payload = "{\"ver\":\"v1\",\"name\":\"" + name + "\",\"transport\":\"softap\"}";
     logs_screen.addQRCode(payload);
 }
 
@@ -148,9 +147,9 @@ void init_network_wifi_and_wifimanager() {
     wifi_event_group = xEventGroupCreate();
 
     /* Register our event handlers for Wi-Fi/IP related events */
-    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_PROV_EVENT, ESP_EVENT_ANY_ID, &network_event_handler, NULL));
-    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &network_event_handler, NULL));
-    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &network_event_handler, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_PROV_EVENT, ESP_EVENT_ANY_ID, &provisioning_event_handler, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &provisioning_event_handler, NULL));
+    ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &provisioning_event_handler, NULL));
 
     /* Initialize Wi-Fi including netif with default config */
     esp_netif_create_default_wifi_sta();
@@ -168,18 +167,37 @@ void init_network_wifi_and_wifimanager() {
 
 QueueHandle_t departuresRefreshQueue = xQueueCreate(1, sizeof(uint8_t));
 
+void fetch_and_process_trips(BvgApiClient &apiClient) {
+    auto trips = apiClient.fetchAndParseTrips();
+
+    if (trips.empty()) {
+        ESP_LOGE(TAG, "No trips found!");
+        return;
+    }
+
+    ESP_LOGI(TAG, "Found %d trips", trips.size());
+
+    departures_screen.clean();
+    for (auto trip : trips) {
+        departures_screen.addItem(trip.lineName, trip.directionName, "2'");
+    }
+}
+
 void DeparturesRefresherTask(void *pvParameter) {
     uint8_t message;
 
+    auto apiClient = BvgApiClient("900078102");
+
     while (true) {
         if (xQueueReceive(departuresRefreshQueue, &message, 0) == pdPASS) {
-            departures_screen.clean();
-            for (int i = 0; i < 5; i++) {
-                departures_screen.addRandomDepartureItem();
-            }
+            printHealthStats("DeparturesRefresherTask");
+
+            fetch_and_process_trips(apiClient);
         }
-        this_thread::sleep_for(10ms);
+        std::this_thread::sleep_for(10ms);
     }
+
+    vTaskDelete(NULL);
 }
 
 const esp_timer_create_args_t departuresRefresherTimerArgs = {
@@ -194,6 +212,7 @@ const esp_timer_create_args_t departuresRefresherTimerArgs = {
 esp_timer_handle_t departuresRefreshTimerHandle = nullptr;
 
 extern "C" void app_main(void) {
+    printHealthStats("app_main start");
     ESP_ERROR_CHECK(esp_event_loop_create_default());
 
     LVGL_LCD::init();
@@ -201,7 +220,9 @@ extern "C" void app_main(void) {
 
     init_nvs();
     init_network_wifi_and_wifimanager();
-    xTaskCreate(DeparturesRefresherTask, "DeparturesRefresherTask", 3072, NULL, 1, NULL);
+
+    // 3356 (words, = 13424 bytes) is the max observed used stack
+    xTaskCreatePinnedToCore(DeparturesRefresherTask, "DeparturesRefresherTask", 4096, NULL, 1, NULL, 0);
 
     bool provisioned = false;
     /* Let's find out if the device is provisioned */
@@ -210,15 +231,13 @@ extern "C" void app_main(void) {
     if (!provisioned) {
         ESP_LOGI(TAG, "Starting provisioning");
 
-        char service_name[12];
-        get_provisioning_ssid(service_name, sizeof(service_name));
-
-        ESP_ERROR_CHECK(wifi_prov_mgr_start_provisioning(WIFI_PROV_SECURITY_0, nullptr, service_name, nullptr));
+        std::string service_name = getProvisioningSSID();
+        ESP_ERROR_CHECK(wifi_prov_mgr_start_provisioning(WIFI_PROV_SECURITY_0, nullptr, service_name.c_str(), nullptr));
+        logs_screen.switchTo();
         logs_screen.addLogLine("It looks like you're trying to set up your device.");
         logs_screen.addLogLine("Please download the ESP SoftAP Provisioning app from the App Store or Google Play, "
                                "open it and follow the instructions.");
-        wifi_prov_print_qr(service_name);
-        logs_screen.switchTo();
+        wifi_prov_print_qr(service_name.c_str());
     } else {
         ESP_LOGI(TAG, "Already provisioned, starting Wi-Fi STA");
         splash_screen.updateStatus("Connecting to WiFi...");
@@ -240,11 +259,14 @@ extern "C" void app_main(void) {
         logs_screen.addLogLine("Connected to WiFi! Switching to departures board...");
     }
 
-    this_thread::sleep_for(2s);
+    std::this_thread::sleep_for(2s);
 
     setup_http_server();
 
     departures_screen.switchTo();
     ESP_ERROR_CHECK(esp_timer_create(&departuresRefresherTimerArgs, &departuresRefreshTimerHandle));
-    ESP_ERROR_CHECK(esp_timer_start_periodic(departuresRefreshTimerHandle, duration_cast<chrono::microseconds>(1s).count()));
+    ESP_ERROR_CHECK(
+        esp_timer_start_periodic(departuresRefreshTimerHandle, duration_cast<std::chrono::microseconds>(5s).count()));
+
+    printHealthStats("end of app_main");
 };
