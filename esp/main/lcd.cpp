@@ -27,7 +27,7 @@
 #define LCD_ST7796_PARAM_BITS (8)
 #define LCD_ST7796_ENDIAN (LCD_RGB_ENDIAN_BGR)
 #define LCD_ST7796_BITS_PER_PIXEL (16)
-#define LCD_ST7796_DRAW_BUFF_DOUBLE (1)
+#define LCD_ST7796_DRAW_BUFF_DOUBLE (0)
 #define LCD_ST7796_DRAW_BUFF_HEIGHT (32)
 #define LCD_ST7796_BL_ON_LEVEL (1)
 
@@ -80,7 +80,7 @@ static esp_err_t app_lcd_init(void) {
         .sclk_io_num = LCD_ST7796_GPIO_SCLK,
         .quadwp_io_num = GPIO_NUM_NC,
         .quadhd_io_num = GPIO_NUM_NC,
-        .max_transfer_sz = LCD_ST7796_H_RES * LCD_ST7796_DRAW_BUFF_HEIGHT * sizeof(uint16_t),
+        .max_transfer_sz = LCD_ST7796_H_RES * LCD_ST7796_DRAW_BUFF_HEIGHT,
     };
     ESP_RETURN_ON_ERROR(spi_bus_initialize(LCD_ST7796_SPI_NUM, &buscfg, SPI_DMA_CH_AUTO), TAG, "SPI init failed");
 
@@ -202,7 +202,7 @@ static esp_err_t app_lvgl_init(void) {
     const lvgl_port_display_cfg_t disp_cfg = {
         .io_handle = lcd_io,
         .panel_handle = lcd_panel,
-        .buffer_size = LCD_ST7796_H_RES * LCD_ST7796_DRAW_BUFF_HEIGHT * sizeof(uint16_t),
+        .buffer_size = LCD_ST7796_H_RES * LCD_ST7796_DRAW_BUFF_HEIGHT,
         .double_buffer = LCD_ST7796_DRAW_BUFF_DOUBLE,
         .hres = LCD_ST7796_H_RES,
         .vres = LCD_ST7796_V_RES,

@@ -13,11 +13,13 @@ LV_FONT_DECLARE(montserrat_regular_96);
 
 class Screen {
   public:
-    bool switchTo(lv_scr_load_anim_t anim_type = LV_SCR_LOAD_ANIM_NONE, uint32_t time = 0, uint32_t delay = 0);
+    void switchTo(lv_scr_load_anim_t anim_type = LV_SCR_LOAD_ANIM_NONE, uint32_t time = 0, uint32_t delay = 0);
 
   protected:
     lv_obj_t *createPanel(lv_scroll_snap_t snap_type);
     lv_obj_t *screen = nullptr;
+
+    virtual void init() = 0;
 };
 
 class SplashScreen : public Screen {
@@ -34,21 +36,20 @@ class SplashScreen : public Screen {
 class LogsScreen : public Screen {
   public:
     void init();
-    bool addLogLine(const std::string &message);
-    bool addQRCode(const std::string &data, const int size = 120);
+    void addLogLine(const std::string &message);
+    void addQRCode(const std::string &data, const int size = 120);
 
   private:
     static const int MAX_LINES = 100;
     lv_obj_t *heading = nullptr;
     lv_obj_t *panel = nullptr;
-    lv_obj_t *addNewLine(const std::string &message);
 };
 
 class DeparturesScreen : public Screen {
   public:
     void init();
-    bool addRandomDepartureItem();
-    bool addItem(const std::string &line_text, const std::string &direction_text, const std::string &time_text);
+    void addRandomDepartureItem();
+    void addItem(const std::string &line_text, const std::string &direction_text, const std::string &time_text);
     void clean();
 
   private:
