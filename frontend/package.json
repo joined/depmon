@@ -3,6 +3,7 @@
     "scripts": {
         "prebuild": "rm -rf dist",
         "start": "parcel src/index.html & nodemon mockBackend.js",
+        "start:no-backend": "parcel src/index.html",
         "build": "parcel build src/index.html && find dist/ -type f ! -name '*.gz' -delete",
         "test": "jest"
     },

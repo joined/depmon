@@ -7,7 +7,7 @@
             "defines": [
                 "ESP_PLATFORM"
             ],
-            // Replace with compiler path
+            // Replace with compiler path, remove this comment
             "compilerPath": "/home/myusername/.espressif/tools/xtensa-esp32-elf/esp-12.2.0_20230208/xtensa-esp32-elf/bin/xtensa-esp32-elf-gcc",
             "includePath": [
                 "${workspaceFolder}/build/config/*",
