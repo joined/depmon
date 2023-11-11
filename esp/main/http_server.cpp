@@ -122,9 +122,9 @@ static esp_err_t rest_common_get_handler(httpd_req_t *req) {
     return ESP_OK;
 }
 
-/* Simple handler for getting temperature data */
 static esp_err_t api_get_version_handler(httpd_req_t *req)
 {
+    // TODO use arduinojson here
     httpd_resp_set_type(req, "application/json");
     cJSON *root = cJSON_CreateObject();
     const esp_app_desc_t *app_description = esp_app_get_description();
@@ -133,8 +133,18 @@ static esp_err_t api_get_version_handler(httpd_req_t *req)
     cJSON_AddStringToObject(root, "project_name", app_description->project_name);
     cJSON_AddStringToObject(root, "compile_time", app_description->time);
     cJSON_AddStringToObject(root, "compile_date", app_description->date);
-    const std::string app_description_str = cJSON_Print(root);
-    httpd_resp_sendstr(req, app_description_str.c_str());
+    httpd_resp_sendstr(req, cJSON_Print(root));
+    cJSON_Delete(root);
+    return ESP_OK;
+}
+
+static esp_err_t api_get_current_station_handler(httpd_req_t *req)
+{
+    // TODO use arduinojson here
+    httpd_resp_set_type(req, "application/json");
+    cJSON *root = cJSON_CreateObject();
+    cJSON_AddStringToObject(root, "id", "900078102");
+    httpd_resp_sendstr(req, cJSON_Print(root));
     cJSON_Delete(root);
     return ESP_OK;
 }
@@ -154,6 +164,14 @@ httpd_handle_t setup_http_server() {
         .handler = api_get_version_handler,
     };
     httpd_register_uri_handler(server, &api_get_version_uri);
+
+    /* API URI handler for getting app version */
+    httpd_uri_t api_get_current_station_uri = {
+        .uri = "/api/currentstation",
+        .method = HTTP_GET,
+        .handler = api_get_current_station_handler,
+    };
+    httpd_register_uri_handler(server, &api_get_current_station_uri);
 
     /* URI handler for getting web server files */
     httpd_uri_t common_get_uri = {
