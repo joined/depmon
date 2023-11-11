@@ -1,4 +1,5 @@
 #include <ArduinoJson.h>
+#include <algorithm>
 #include <chrono>
 #include <esp_http_client.h>
 #include <esp_log.h>
@@ -17,6 +18,7 @@
 #include "bvg_api_client.hpp"
 #include "http_server.hpp"
 #include "lcd.hpp"
+#include "time.hpp"
 #include "ui.hpp"
 #include "utils.hpp"
 
@@ -128,7 +130,8 @@ std::string getProvisioningSSID() {
 
     const std::string ssid_prefix = "PROV_";
     char service_name[12];
-    snprintf(service_name, sizeof(service_name), "%s%02X%02X%02X", ssid_prefix.c_str(), eth_mac[3], eth_mac[4], eth_mac[5]);
+    snprintf(service_name, sizeof(service_name), "%s%02X%02X%02X", ssid_prefix.c_str(), eth_mac[3], eth_mac[4],
+             eth_mac[5]);
 
     return std::string(service_name);
 };
@@ -178,8 +181,11 @@ void fetch_and_process_trips(BvgApiClient &apiClient) {
     ESP_LOGI(TAG, "Found %d trips", trips.size());
 
     departures_screen.clean();
+    const auto now = Time::timePointNow();
     for (auto trip : trips) {
-        departures_screen.addItem(trip.lineName, trip.directionName, "2'");
+        const auto timeToDeparture = trip.departureTime - now;
+        departures_screen.addItem(trip.lineName, trip.directionName,
+                                  std::chrono::duration_cast<std::chrono::seconds>(timeToDeparture));
     }
 }
 
@@ -262,6 +268,8 @@ extern "C" void app_main(void) {
     std::this_thread::sleep_for(2s);
 
     setup_http_server();
+
+    Time::initSNTP();
 
     departures_screen.switchTo();
     ESP_ERROR_CHECK(esp_timer_create(&departuresRefresherTimerArgs, &departuresRefreshTimerHandle));

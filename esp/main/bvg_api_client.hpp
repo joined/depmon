@@ -7,7 +7,7 @@
 
 struct Trip {
     std::string tripId;
-    std::tm departureTime;
+    std::chrono::system_clock::time_point departureTime;
     std::string directionName;
     std::string lineName;
 };
@@ -20,7 +20,7 @@ class BvgApiClient {
 
   private:
     esp_http_client_handle_t client;
-    esp_err_t _http_event_handler(esp_http_client_event_t *evt);
+    esp_err_t http_event_handler(esp_http_client_event_t *evt);
     char *output_buffer = NULL;
     int buffer_pos;
 
