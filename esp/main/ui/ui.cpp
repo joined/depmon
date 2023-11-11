@@ -205,7 +205,7 @@ void DeparturesScreen::addItem(const std::string &line_text, const std::string &
     }
 
     const auto minutes = std::chrono::duration_cast<std::chrono::minutes>(time_to_departure).count();
-    const std::std::string time_text = minutes <= 0 ? "Now" : std::to_string(minutes) + "'";
+    const std::string time_text = minutes <= 0 ? "Now" : std::to_string(minutes) + "'";
 
     DepartureItem departureItem;
     departureItem.create(panel, line_text, direction_text, time_text);
