@@ -1,5 +1,3 @@
-#include <ArduinoJson.h>
-#include <algorithm>
 #include <chrono>
 #include <esp_http_client.h>
 #include <esp_log.h>
