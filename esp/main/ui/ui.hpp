@@ -1,5 +1,6 @@
 #pragma once
 
+#include <chrono>
 #include <mutex>
 #include <string>
 #include "lvgl.h"
@@ -9,7 +10,6 @@ inline std::recursive_mutex lvgl_mutex;
 LV_FONT_DECLARE(montserrat_regular_16);
 LV_FONT_DECLARE(montserrat_regular_28);
 LV_FONT_DECLARE(montserrat_regular_96);
-
 
 class Screen {
   public:
@@ -49,7 +49,8 @@ class DeparturesScreen : public Screen {
   public:
     void init();
     void addRandomDepartureItem();
-    void addItem(const std::string &line_text, const std::string &direction_text, const std::string &time_text);
+    void addItem(const std::string &line_text, const std::string &direction_text,
+                 const std::chrono::seconds &time_to_departure);
     void clean();
 
   private:

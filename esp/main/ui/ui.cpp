@@ -1,7 +1,4 @@
-#include <string>
 #include "ui.hpp"
-
-using namespace std;
 
 namespace Color {
 const lv_color_t black = lv_color_hex(0x000000);
@@ -17,13 +14,13 @@ void Screen::switchTo(lv_scr_load_anim_t anim_type, uint32_t time, uint32_t dela
     }
 
     {
-        const lock_guard<recursive_mutex> lock(lvgl_mutex);
+        const std::lock_guard<std::recursive_mutex> lock(lvgl_mutex);
         lv_scr_load_anim(screen, anim_type, time, delay, true);
     }
 }
 
 lv_obj_t *Screen::createPanel(lv_scroll_snap_t snap_type) {
-    const lock_guard<recursive_mutex> lock(lvgl_mutex);
+    const std::lock_guard<std::recursive_mutex> lock(lvgl_mutex);
     auto *panel = lv_obj_create(screen);
     lv_obj_set_width(panel, 447);
     lv_obj_set_height(panel, 250);
@@ -45,7 +42,7 @@ lv_obj_t *Screen::createPanel(lv_scroll_snap_t snap_type) {
 };
 
 void SplashScreen::init() {
-    const lock_guard<recursive_mutex> lock(lvgl_mutex);
+    const std::lock_guard<std::recursive_mutex> lock(lvgl_mutex);
     screen = lv_obj_create(NULL);
     lv_obj_set_style_bg_color(screen, Color::black, DEFAULT_SELECTOR);
 
@@ -72,17 +69,17 @@ void SplashScreen::init() {
     lv_obj_set_style_arc_color(spinner, Color::yellow, (uint32_t)LV_PART_INDICATOR | (uint16_t)LV_STATE_DEFAULT);
 };
 
-void SplashScreen::updateStatus(const string &message) {
+void SplashScreen::updateStatus(const std::string &message) {
     if (status == nullptr) {
         return;
     }
 
-    const lock_guard<recursive_mutex> lock(lvgl_mutex);
+    const std::lock_guard<std::recursive_mutex> lock(lvgl_mutex);
     lv_label_set_text(status, message.c_str());
 };
 
 void LogsScreen::init() {
-    const lock_guard<recursive_mutex> lock(lvgl_mutex);
+    const std::lock_guard<std::recursive_mutex> lock(lvgl_mutex);
     screen = lv_obj_create(NULL);
     lv_obj_set_style_bg_color(screen, Color::black, DEFAULT_SELECTOR);
     lv_obj_set_style_bg_opa(screen, 255, DEFAULT_SELECTOR);
@@ -96,12 +93,12 @@ void LogsScreen::init() {
     panel = createPanel(LV_SCROLL_SNAP_END);
 };
 
-void LogsScreen::addLogLine(const string &message) {
+void LogsScreen::addLogLine(const std::string &message) {
     if (panel == nullptr) {
         return;
     }
 
-    const lock_guard<recursive_mutex> lock(lvgl_mutex);
+    const std::lock_guard<std::recursive_mutex> lock(lvgl_mutex);
     auto *log_line = lv_label_create(panel);
     lv_obj_set_width(log_line, lv_pct(100));
     lv_obj_set_height(log_line, LV_SIZE_CONTENT);
@@ -116,12 +113,12 @@ void LogsScreen::addLogLine(const string &message) {
     }
 };
 
-void LogsScreen::addQRCode(const string &data, const int size) {
+void LogsScreen::addQRCode(const std::string &data, const int size) {
     if (panel == nullptr) {
         return;
     }
 
-    const lock_guard<recursive_mutex> lock(lvgl_mutex);
+    const std::lock_guard<std::recursive_mutex> lock(lvgl_mutex);
     auto *qrcode = lv_qrcode_create(panel, size, Color::black, Color::white);
     lv_qrcode_update(qrcode, data.c_str(), data.length());
 
@@ -130,8 +127,8 @@ void LogsScreen::addQRCode(const string &data, const int size) {
 
 class DepartureItem {
   public:
-    void create(lv_obj_t *parent, const string &line_text, const string &direction_text, const string &time_text) {
-        const lock_guard<recursive_mutex> lock(lvgl_mutex);
+    void create(lv_obj_t *parent, const std::string &line_text, const std::string &direction_text, const std::string &time_text) {
+        const std::lock_guard<std::recursive_mutex> lock(lvgl_mutex);
         item = lv_obj_create(parent);
         lv_obj_set_width(item, lv_pct(100));
         lv_obj_set_height(item, LV_SIZE_CONTENT);
@@ -173,7 +170,7 @@ class DepartureItem {
 };
 
 void DeparturesScreen::init() {
-    const lock_guard<recursive_mutex> lock(lvgl_mutex);
+    const std::lock_guard<std::recursive_mutex> lock(lvgl_mutex);
     screen = lv_obj_create(NULL);
     lv_obj_set_style_bg_color(screen, Color::black, DEFAULT_SELECTOR);
 
@@ -196,16 +193,19 @@ void DeparturesScreen::init() {
 
 void DeparturesScreen::addRandomDepartureItem() {
     if (rand() % 2 == 0) {
-        addItem("M41", "Sonnenallee", "2'");
+        addItem("M41", "Sonnenallee", std::chrono::minutes(5));
     } else {
-        addItem("U7", "U Lorem ipsum sit amet consectetur", "5'");
+        addItem("U7", "U Lorem ipsum sit amet consectetur", std::chrono::minutes(10));
     }
 };
 
-void DeparturesScreen::addItem(const string &line_text, const string &direction_text, const string &time_text) {
+void DeparturesScreen::addItem(const std::string &line_text, const std::string &direction_text, const std::chrono::seconds &time_to_departure) {
     if (panel == nullptr) {
         return;
     }
+
+    const auto minutes = std::chrono::duration_cast<std::chrono::minutes>(time_to_departure).count();
+    const std::std::string time_text = minutes <= 0 ? "Now" : std::to_string(minutes) + "'";
 
     DepartureItem departureItem;
     departureItem.create(panel, line_text, direction_text, time_text);
@@ -216,13 +216,13 @@ void DeparturesScreen::clean() {
         return;
     }
 
-    const lock_guard<recursive_mutex> lock(lvgl_mutex);
+    const std::lock_guard<std::recursive_mutex> lock(lvgl_mutex);
     lv_obj_clean(panel);
 };
 
 void UIManager::init() {
     {
-        const lock_guard<recursive_mutex> lock(lvgl_mutex);
+        const std::lock_guard<std::recursive_mutex> lock(lvgl_mutex);
         auto *dispp = lv_disp_get_default();
         auto *theme = lv_theme_default_init(dispp, lv_palette_main(LV_PALETTE_BLUE),
                                                   lv_palette_main(LV_PALETTE_RED), true, LV_FONT_DEFAULT);

@@ -1,4 +1,5 @@
 #include <ArduinoJson.h>
+#include <chrono>
 #include <ctime>
 #include <esp_http_client.h>
 #include <esp_log.h>
@@ -6,6 +7,7 @@
 #include <vector>
 
 #include "bvg_api_client.hpp"
+#include "time.hpp"
 
 static const char *TAG = "BvgApiClient";
 
@@ -18,7 +20,7 @@ BvgApiClient::BvgApiClient(const std::string &stationId) {
         .event_handler =
             [](esp_http_client_event_t *evt) {
                 auto self = static_cast<BvgApiClient *>(evt->user_data);
-                return self->_http_event_handler(evt);
+                return self->http_event_handler(evt);
             },
         .user_data = this,
     };
@@ -29,7 +31,7 @@ BvgApiClient::BvgApiClient(const std::string &stationId) {
 
 BvgApiClient::~BvgApiClient() { esp_http_client_cleanup(client); }
 
-esp_err_t BvgApiClient::_http_event_handler(esp_http_client_event_t *evt) {
+esp_err_t BvgApiClient::http_event_handler(esp_http_client_event_t *evt) {
     switch (evt->event_id) {
     case HTTP_EVENT_ON_DATA:
         ESP_LOGD(TAG, "HTTP_EVENT_ON_DATA, data_len=%d", evt->data_len);
@@ -88,8 +90,9 @@ std::vector<Trip> BvgApiClient::fetchAndParseTrips() {
 
     StaticJsonDocument<200> filter;
     filter["departures"][0]["tripId"] = true;
-    filter["departures"][0]["destination"]["name"] = true;
+    filter["departures"][0]["direction"] = true;
     filter["departures"][0]["line"]["name"] = true;
+    filter["departures"][0]["when"] = true;
 
     DynamicJsonDocument doc(this->MAX_JSON_DOC_SIZE);
     // TODO It would be cool to use a std::istream here, would probably save memory too.
@@ -108,10 +111,14 @@ std::vector<Trip> BvgApiClient::fetchAndParseTrips() {
 
     for (auto departure : departures) {
         const char *tripId = departure["tripId"];
-        const char *destination = departure["destination"]["name"];
+        const char *direction = departure["direction"];
         const char *line = departure["line"]["name"];
+        const char *when = departure["when"];
 
-        trips.push_back({.tripId = tripId, .departureTime = std::tm(), .directionName = destination, .lineName = line});
+        trips.push_back({.tripId = tripId,
+                         .departureTime = Time::iSO8601StringToTimePoint(when),
+                         .directionName = direction,
+                         .lineName = line});
     }
 
     free(this->output_buffer);
