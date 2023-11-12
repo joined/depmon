@@ -125,7 +125,7 @@ static esp_err_t rest_common_get_handler(httpd_req_t *req) {
 
 static esp_err_t api_get_version_handler(httpd_req_t *req) {
     httpd_resp_set_type(req, "application/json");
-    DynamicJsonDocument doc(64);
+    DynamicJsonDocument doc(128);
     const esp_app_desc_t *app_description = esp_app_get_description();
     doc["version"] = app_description->version;
     doc["idf_version"] = app_description->idf_ver;
