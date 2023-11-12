@@ -1,6 +1,5 @@
 import { h } from 'preact';
 import { css } from '@emotion/css';
-import { useFetch } from 'usehooks-ts';
 import { Station, stations } from './stations';
 import {
     Alert,
