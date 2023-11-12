@@ -3,19 +3,26 @@ import { css } from '@emotion/css';
 import { useFetch } from 'usehooks-ts';
 import { Station, stations } from './stations';
 import {
+    Alert,
     Autocomplete,
+    AutocompleteRenderOptionState,
     Button,
     CircularProgress,
     CssBaseline,
+    Snackbar,
     Stack,
     TextField,
     ThemeProvider,
+    Typography,
     createFilterOptions,
     createTheme,
 } from '@mui/material';
 import parse from 'autosuggest-highlight/parse';
 import match from 'autosuggest-highlight/match';
-import { useEffect, useState } from 'preact/compat';
+import { useEffect, useMemo, useState, Fragment } from 'preact/compat';
+import useSWRImmutable from 'swr/immutable';
+import useSWRMutation from 'swr/mutation';
+import axios from 'axios';
 
 const theme = createTheme({
     palette: {
@@ -23,49 +30,81 @@ const theme = createTheme({
     },
 });
 
+interface CurrentStationGetResponse {
+    id: string;
+}
+
+type CurrentStationPostRequest = CurrentStationGetResponse;
+
+const getRequestSender = (url: string) => axios.get(url).then((res) => res.data);
+const postRequestSender = <TRequestBody,>(url: string, { arg }: { arg: TRequestBody }) => axios.post(url, { ...arg });
+
 export function StationSelector() {
-    const filterOptions = createFilterOptions<Station>({
-        ignoreCase: true,
-        limit: 10,
-    });
-
-    const { data, error } = useFetch<{ id: string }>('/api/currentstation');
-
     const [selectedStation, setSelectedStation] = useState<Station | null>(null);
     const [inputValue, setInputValue] = useState('');
+    const [isSnackbarOpen, setSnackbarOpen] = useState(false);
+    const [lastPostRequestOutcome, setLastPostRequestOutcome] = useState<'success' | 'error' | null>(null);
+
+    const filterOptions = useMemo(
+        () =>
+            createFilterOptions<Station>({
+                ignoreCase: true,
+                limit: 10,
+            }),
+        []
+    );
+
+    const { data, error, isLoading } = useSWRImmutable<CurrentStationGetResponse>('/api/currentstation', getRequestSender);
+    const { trigger, isMutating } = useSWRMutation(
+        '/api/currentstation',
+        postRequestSender<CurrentStationPostRequest>,
+        {
+            optimisticData: { id: selectedStation?.id },
+            revalidate: false,
+            onSuccess: () => {
+                setLastPostRequestOutcome('success');
+                setSnackbarOpen(true);
+            },
+            onError: () => {
+                setLastPostRequestOutcome('error');
+                setSnackbarOpen(true);
+            },
+        }
+    );
 
     useEffect(() => {
-        if (data) {
-            setSelectedStation(stations.find((s) => s.id === data.id) || null);
+        // On first page load and on error, update the selected station to the current station.
+        if (data && selectedStation?.id !== data.id) {
+            setSelectedStation(stations.find((station) => station.id === data.id)!);
         }
     }, [data]);
 
-    const onSubmit = async (event: h.JSX.TargetedEvent<HTMLFormElement>) => {
-        event.preventDefault();
+    const renderOption = (
+        props: React.HTMLAttributes<HTMLLIElement>,
+        option: Station,
+        state: AutocompleteRenderOptionState
+    ) => {
+        const matches = match(option.name, state.inputValue, { insideWords: true });
+        const parts = parse(option.name, matches);
 
-        try {
-            const response = await fetch('/api/currentstation', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ id: selectedStation!.id }),
-            });
-
-            if (!response.ok) {
-                // TODO If the request fail, we don't know if station was updated or not.
-                // We should handle that better.
-                throw new Error('Network response was not ok');
-            }
-
-            // Handle success, e.g., show a success message or redirect
-        } catch (error) {
-            console.error('There was a problem with the fetch operation:', error);
-            // Handle error, e.g., show an error message
-        }
+        return (
+            <li {...props}>
+                <div>
+                    {parts.map((part, index) => (
+                        <span
+                            key={index}
+                            style={{
+                                fontWeight: part.highlight ? 700 : 400,
+                            }}>
+                            {part.text}
+                        </span>
+                    ))}
+                </div>
+            </li>
+        );
     };
 
-    if (!data) {
+    if (isLoading) {
         return <CircularProgress color="secondary" />;
     }
 
@@ -74,50 +113,48 @@ export function StationSelector() {
     }
 
     return (
-        <form onSubmit={onSubmit}>
-            <Stack direction="row" spacing={2}>
-                <Autocomplete<Station>
-                    disablePortal
-                    id="station-selector"
-                    options={stations}
-                    filterOptions={filterOptions}
-                    inputValue={inputValue}
-                    onInputChange={(event, newInputValue) => {
-                        setInputValue(newInputValue);
-                    }}
-                    value={selectedStation}
-                    onChange={(event: any, newStation: Station | null) => {
-                        setSelectedStation(newStation);
-                    }}
-                    sx={{ width: 300 }}
-                    renderInput={(params) => <TextField {...params} label="Station" />}
-                    getOptionLabel={(option) => option.name}
-                    renderOption={(props, option, { inputValue }) => {
-                        const matches = match(option.name, inputValue, { insideWords: true });
-                        const parts = parse(option.name, matches);
-
-                        return (
-                            <li {...props}>
-                                <div>
-                                    {parts.map((part, index) => (
-                                        <span
-                                            key={index}
-                                            style={{
-                                                fontWeight: part.highlight ? 700 : 400,
-                                            }}>
-                                            {part.text}
-                                        </span>
-                                    ))}
-                                </div>
-                            </li>
-                        );
-                    }}
-                />
-                <Button type="submit" variant="contained" disabled={selectedStation === null}>
-                    Save
-                </Button>
-            </Stack>
-        </form>
+        <>
+            <form
+                className={css`
+                    margin-bottom: 16px;
+                `}
+                onSubmit={(event) => {
+                    event.preventDefault();
+                    trigger({ id: selectedStation!.id });
+                }}>
+                <Stack direction="row" spacing={2}>
+                    <Autocomplete<Station>
+                        disablePortal
+                        id="station-selector"
+                        options={stations}
+                        filterOptions={filterOptions}
+                        inputValue={inputValue}
+                        onInputChange={(event, newInputValue) => {
+                            setInputValue(newInputValue);
+                        }}
+                        value={selectedStation}
+                        onChange={(event: any, newStation: Station | null) => {
+                            setSelectedStation(newStation);
+                        }}
+                        sx={{ width: 300 }}
+                        renderInput={(params) => <TextField {...params} label="Station" />}
+                        getOptionLabel={(option) => option.name}
+                        renderOption={renderOption}
+                    />
+                    <Button
+                        type="submit"
+                        variant="contained"
+                        disabled={selectedStation === null || selectedStation.id === data?.id || isMutating}>
+                        Save
+                    </Button>
+                </Stack>
+            </form>
+            <Snackbar open={isSnackbarOpen} autoHideDuration={2000} onClose={() => setSnackbarOpen(false)}>
+                <Alert severity={lastPostRequestOutcome!} variant='filled'>
+                    {lastPostRequestOutcome === 'success' ? 'Saved!' : 'Error saving station'}
+                </Alert>
+            </Snackbar>
+        </>
     );
 }
 
@@ -172,7 +209,13 @@ const App = () => {
                     max-width: 600px;
                     margin: 0 auto;
                 `}>
+                <Typography variant="h1" gutterBottom>
+                    DepMon
+                </Typography>
                 <StationSelector />
+                <Typography variant="h3" gutterBottom>
+                    Version information
+                </Typography>
                 <VersionInfo />
             </main>
         </ThemeProvider>
