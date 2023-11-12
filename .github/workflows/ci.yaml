@@ -2,40 +2,36 @@ name: CI
 
 on: [push]
 
-env:
-  ESP_IDF_VERSION: v5.1
-
 jobs:
   build_esp:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repo
-      uses: actions/checkout@v4
-      with:
-        submodules: 'recursive'
-    - name: Install node
-      uses: actions/setup-node@v3
-      with:
-        node-version: '16.16.0'
-        cache: 'yarn'
-        cache-dependency-path: 'frontend/yarn.lock'
-    - name: Install frontend dependencies and build frontend
-      run: |
-        cd frontend
-        yarn install
-        yarn build
-    - name: Cache esp-idf build
-      uses: actions/cache@v3
-      with:
-        path: "esp/build"
-        key: ${{ runner.os }}-build-v2
-    - name: esp-idf build
-      uses: espressif/esp-idf-ci-action@v1
-      with:
-        esp_idf_version: ${{ env.ESP_IDF_VERSION }}
-        target: esp32
-        path: 'esp'
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          submodules: "recursive"
+      - name: Install node
+        uses: actions/setup-node@v3
+        with:
+          node-version: "16.16.0"
+          cache: "yarn"
+          cache-dependency-path: "frontend/yarn.lock"
+      - name: Install frontend dependencies and build frontend
+        run: |
+          cd frontend
+          yarn install
+          yarn build
+      - name: Cache esp-idf build
+        uses: actions/cache@v3
+        with:
+          path: "esp/build"
+          key: ${{ runner.os }}-build-v2
+      - name: esp-idf build
+        run: |
+          docker run -t -e IDF_TARGET="esp32" -e GITHUB_ACTIONS=true -v "${GITHUB_WORKSPACE}:/app/${{ github.repository }}" \
+          -w "/app/${{ github.repository }}/esp" espressif/idf:v5.1 \
+          /bin/bash -c 'git config --global --add safe.directory "*" && idf.py build'
 
   build_simulator:
     runs-on: ubuntu-latest
@@ -50,7 +46,7 @@ jobs:
           key: ${{ runner.os }}-pio
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.12'
+          python-version: "3.12"
       - name: Install SDL2
         run: |
           sudo add-apt-repository -y "deb http://archive.ubuntu.com/ubuntu `lsb_release -sc` main universe restricted multiverse"
