@@ -21,12 +21,13 @@ class BvgApiClient {
   private:
     esp_http_client_handle_t client;
     esp_err_t http_event_handler(esp_http_client_event_t *evt);
+    void setUrl(const std::string &stationId);
     char *output_buffer = NULL;
     int buffer_pos;
 
-    static constexpr const int START_BUFFER_SIZE = 10 * 1024;
-    static constexpr const int MAX_JSON_DOC_SIZE = 16 * 1024;
+    static constexpr const int HTTP_BUFFER_START_SIZE = 15 * 1024;
+    static constexpr const int MAX_JSON_DOC_SIZE = 8 * 1024;
     static constexpr const double BUFFER_GROWTH_FACTOR = 1.5;
-    static constexpr const int N_RESULTS = 10;
+    static constexpr const int N_RESULTS = 12;
     size_t current_buffer_size;
 };

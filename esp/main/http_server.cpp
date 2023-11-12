@@ -1,15 +1,16 @@
+#include <ArduinoJson.h>
+#include <esp_app_desc.h>
 #include <esp_http_server.h>
 #include <esp_log.h>
 #include <esp_random.h>
-#include <esp_system.h>
 #include <esp_spiffs.h>
-#include <esp_app_desc.h>
+#include <esp_system.h>
 #include <esp_vfs.h>
 #include <fcntl.h>
 #include <string>
-#include <cJSON.h>
 
 #include "http_server.hpp"
+#include "nvs_engine.hpp"
 
 // 20KB scratch buffer for temporary storage during file transfer
 #define SCRATCH_BUFSIZE (20480)
@@ -40,7 +41,7 @@ static esp_err_t init_fs(void) {
     if (ret != ESP_OK) {
         ESP_LOGE(TAG, "Failed to get SPIFFS partition information (%s)", esp_err_to_name(ret));
     } else {
-        ESP_LOGI(TAG, "Partition size: total: %d, used: %d", total, used);
+        ESP_LOGD(TAG, "Partition size: total: %d, used: %d", total, used);
     }
     return ESP_OK;
 }
@@ -79,7 +80,7 @@ static esp_err_t rest_common_get_handler(httpd_req_t *req) {
     // Assumption: all files are gzipped. This won't be the case forever, probably.
     filepath += ".gz";
 
-    ESP_LOGI(TAG, "Opening file %s", filepath.c_str());
+    ESP_LOGD(TAG, "Opening file %s", filepath.c_str());
 
     int file_descriptor = open(filepath.c_str(), O_RDONLY, 0);
     if (file_descriptor == -1) {
@@ -92,7 +93,7 @@ static esp_err_t rest_common_get_handler(httpd_req_t *req) {
     set_content_type_from_file(req, filepath);
     httpd_resp_set_hdr(req, "Content-Encoding", "gzip");
 
-    ESP_LOGI(TAG, "Starting to send response for file: %s", filepath.c_str());
+    ESP_LOGD(TAG, "Starting to send response for file: %s", filepath.c_str());
 
     char *chunk = scratch;
     ssize_t read_bytes;
@@ -116,36 +117,77 @@ static esp_err_t rest_common_get_handler(httpd_req_t *req) {
     } while (read_bytes > 0);
     /* Close file after sending complete */
     close(file_descriptor);
-    ESP_LOGI(TAG, "File sending complete for file: %s", filepath.c_str());
+    ESP_LOGD(TAG, "File sending complete for file: %s", filepath.c_str());
     /* Respond with an empty chunk to signal HTTP response completion */
     httpd_resp_send_chunk(req, NULL, 0);
     return ESP_OK;
 }
 
-static esp_err_t api_get_version_handler(httpd_req_t *req)
-{
-    // TODO use arduinojson here
+static esp_err_t api_get_version_handler(httpd_req_t *req) {
     httpd_resp_set_type(req, "application/json");
-    cJSON *root = cJSON_CreateObject();
+    DynamicJsonDocument doc(64);
     const esp_app_desc_t *app_description = esp_app_get_description();
-    cJSON_AddStringToObject(root, "version", app_description->version);
-    cJSON_AddStringToObject(root, "idf_version", app_description->idf_ver);
-    cJSON_AddStringToObject(root, "project_name", app_description->project_name);
-    cJSON_AddStringToObject(root, "compile_time", app_description->time);
-    cJSON_AddStringToObject(root, "compile_date", app_description->date);
-    httpd_resp_sendstr(req, cJSON_Print(root));
-    cJSON_Delete(root);
+    doc["version"] = app_description->version;
+    doc["idf_version"] = app_description->idf_ver;
+    doc["project_name"] = app_description->project_name;
+    doc["compile_time"] = app_description->time;
+    doc["compile_date"] = app_description->date;
+    char buffer[64];
+    serializeJson(doc, buffer);
+    httpd_resp_sendstr(req, buffer);
     return ESP_OK;
 }
 
-static esp_err_t api_get_current_station_handler(httpd_req_t *req)
-{
-    // TODO use arduinojson here
+static esp_err_t api_get_current_station_handler(httpd_req_t *req) {
     httpd_resp_set_type(req, "application/json");
-    cJSON *root = cJSON_CreateObject();
-    cJSON_AddStringToObject(root, "id", "900078102");
-    httpd_resp_sendstr(req, cJSON_Print(root));
-    cJSON_Delete(root);
+    std::string current_station;
+    NVSEngine nvs_engine("depmon");
+    auto err = nvs_engine.readString("current_station", &current_station);
+    DynamicJsonDocument doc(32);
+    if (err != ESP_OK) {
+        doc["id"] = nullptr;
+    } else {
+        doc["id"] = current_station;
+    }
+    char buffer[64];
+    serializeJson(doc, buffer);
+    httpd_resp_sendstr(req, buffer);
+    return ESP_OK;
+}
+
+static esp_err_t api_set_current_station_handler(httpd_req_t *req) {
+    char content[100];
+    size_t recv_size = std::min(req->content_len, sizeof(content));
+    int ret = httpd_req_recv(req, content, recv_size);
+    if (ret <= 0) { /* 0 return value indicates connection closed */
+        /* Check if timeout occurred */
+        if (ret == HTTPD_SOCK_ERR_TIMEOUT) {
+            /* In case of timeout one can choose to retry calling
+             * httpd_req_recv(), but to keep it simple, here we
+             * respond with an HTTP 408 (Request Timeout) error */
+            httpd_resp_send_408(req);
+        }
+        /* In case of error, returning ESP_FAIL will
+         * ensure that the underlying socket is closed */
+        return ESP_FAIL;
+    }
+    DynamicJsonDocument doc(32);
+    auto error = deserializeJson(doc, content);
+    if (error) {
+        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Invalid JSON");
+        return ESP_FAIL;
+    }
+
+    const std::string id = doc["id"];
+    NVSEngine nvs_engine("depmon");
+    auto err = nvs_engine.setString("current_station", id);
+    if (err != ESP_OK) {
+        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to set current station");
+        return ESP_FAIL;
+    }
+
+    httpd_resp_set_type(req, "application/json");
+    httpd_resp_sendstr(req, "{}");
     return ESP_OK;
 }
 
@@ -157,7 +199,6 @@ httpd_handle_t setup_http_server() {
 
     ESP_ERROR_CHECK(httpd_start(&server, &config));
 
-    /* API URI handler for getting app version */
     httpd_uri_t api_get_version_uri = {
         .uri = "/api/version",
         .method = HTTP_GET,
@@ -165,7 +206,6 @@ httpd_handle_t setup_http_server() {
     };
     httpd_register_uri_handler(server, &api_get_version_uri);
 
-    /* API URI handler for getting app version */
     httpd_uri_t api_get_current_station_uri = {
         .uri = "/api/currentstation",
         .method = HTTP_GET,
@@ -173,9 +213,15 @@ httpd_handle_t setup_http_server() {
     };
     httpd_register_uri_handler(server, &api_get_current_station_uri);
 
+    httpd_uri_t api_set_current_station_uri = {
+        .uri = "/api/currentstation",
+        .method = HTTP_POST,
+        .handler = api_set_current_station_handler,
+    };
+    httpd_register_uri_handler(server, &api_set_current_station_uri);
+
     /* URI handler for getting web server files */
-    httpd_uri_t common_get_uri = {
-        .uri = "/*", .method = HTTP_GET, .handler = rest_common_get_handler};
+    httpd_uri_t common_get_uri = {.uri = "/*", .method = HTTP_GET, .handler = rest_common_get_handler};
     httpd_register_uri_handler(server, &common_get_uri);
 
     return server;

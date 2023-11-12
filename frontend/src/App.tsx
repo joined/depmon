@@ -53,7 +53,10 @@ export function StationSelector() {
         []
     );
 
-    const { data, error, isLoading } = useSWRImmutable<CurrentStationGetResponse>('/api/currentstation', getRequestSender);
+    const { data, error, isLoading } = useSWRImmutable<CurrentStationGetResponse>(
+        '/api/currentstation',
+        getRequestSender
+    );
     const { trigger, isMutating } = useSWRMutation(
         '/api/currentstation',
         postRequestSender<CurrentStationPostRequest>,
@@ -74,7 +77,7 @@ export function StationSelector() {
     useEffect(() => {
         // On first page load and on error, update the selected station to the current station.
         if (data && selectedStation?.id !== data.id) {
-            setSelectedStation(stations.find((station) => station.id === data.id)!);
+            setSelectedStation(stations.find((station) => station.id === data.id) || null);
         }
     }, [data]);
 
@@ -149,7 +152,7 @@ export function StationSelector() {
                 </Stack>
             </form>
             <Snackbar open={isSnackbarOpen} autoHideDuration={2000} onClose={() => setSnackbarOpen(false)}>
-                <Alert severity={lastPostRequestOutcome!} variant='filled'>
+                <Alert severity={lastPostRequestOutcome!} variant="filled">
                     {lastPostRequestOutcome === 'success' ? 'Saved!' : 'Error saving station'}
                 </Alert>
             </Snackbar>
@@ -166,32 +169,32 @@ interface VersionResponse {
 }
 
 const VersionInfo = () => {
-    const { data, error } = useFetch<VersionResponse>('/api/version');
+    const { data, error, isLoading } = useSWRImmutable<VersionResponse>('/api/version', getRequestSender);
+
+    if (isLoading) {
+        return <CircularProgress color="secondary" />;
+    }
 
     if (error) {
         return <p>Error loading version information.</p>;
     }
 
-    if (!data) {
-        return <CircularProgress color="secondary" />;
-    }
-
     return (
         <ul>
             <li>
-                <strong>Version:</strong> {data.version}
+                <strong>Version:</strong> {data!.version}
             </li>
             <li>
-                <strong>ESP-IDF version:</strong> {data.idf_version}
+                <strong>ESP-IDF version:</strong> {data!.idf_version}
             </li>
             <li>
-                <strong>Project name:</strong> {data.project_name}
+                <strong>Project name:</strong> {data!.project_name}
             </li>
             <li>
-                <strong>Compile time:</strong> {data.compile_time}
+                <strong>Compile time:</strong> {data!.compile_time}
             </li>
             <li>
-                <strong>Compile date:</strong> {data.compile_date}
+                <strong>Compile date:</strong> {data!.compile_date}
             </li>
         </ul>
     );

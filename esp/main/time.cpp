@@ -28,7 +28,7 @@ esp_err_t initSNTP() {
 
         esp_sntp_init();
 
-        ESP_LOGI(TAG, "SNTP Initialized");
+        ESP_LOGD(TAG, "SNTP Initialized");
     }
 
     if (synced) {
