@@ -53295,10 +53295,6 @@ const stations = [
 
 export interface Station {
     name: string;
-    id: string;
-    weight: number;
-    lat: number;
-    lon: number;
-}
+    id: string;}
 
 export { stations };

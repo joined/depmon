@@ -27,12 +27,13 @@ app.get('/currentstation', (req, res) => {
 });
 
 app.post('/currentstation', (req, res) => {
-    currentStationId = req.body.id;
-    res.send(
-        JSON.stringify({
-            ok: 1,
-        })
-    );
+    // Fail 20% of the time
+    if (Math.random() < 0.8) {
+        currentStationId = req.body.id;
+        res.send();
+    } else {
+        res.status(500).send();
+    }
 });
 
 app.listen(port, () => {
