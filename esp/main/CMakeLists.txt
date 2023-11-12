@@ -8,7 +8,7 @@ idf_component_register(
 
 set(FRONTEND_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../frontend")
 
-if("$ENV{GITHUB_ACTIONS}" STREQUAL "true")
+if(DEFINED ENV{GITHUB_ACTIONS})
     message(STATUS "Running on GitHub Actions. Assuming that web UI is already built.")
 
     spiffs_create_partition_image(www ${FRONTEND_DIR}/dist FLASH_IN_PROJECT)
