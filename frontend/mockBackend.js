@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 const port = 3000;
 
-let currentStationId = '900078102';
+let currentStationId = null;
 
 app.use(express.json());
 

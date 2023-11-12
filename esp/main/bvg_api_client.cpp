@@ -7,16 +7,14 @@
 #include <vector>
 
 #include "bvg_api_client.hpp"
+#include "nvs_engine.hpp"
 #include "time.hpp"
 
 static const char *TAG = "BvgApiClient";
 
 BvgApiClient::BvgApiClient(const std::string &stationId) {
-    std::string url =
-        "https://v6.bvg.transport.rest/stops/" + stationId + "/departures?results=" + std::to_string(N_RESULTS);
-
     esp_http_client_config_t config = {
-        .url = url.c_str(),
+        .url = "https://www.google.com",  // Set later
         .event_handler =
             [](esp_http_client_event_t *evt) {
                 auto self = static_cast<BvgApiClient *>(evt->user_data);
@@ -39,7 +37,7 @@ esp_err_t BvgApiClient::http_event_handler(esp_http_client_event_t *evt) {
         ESP_LOGD(TAG, "Current buffer_pos: %d", buffer_pos);
 
         if (this->output_buffer == NULL) {
-            this->current_buffer_size = START_BUFFER_SIZE;
+            this->current_buffer_size = HTTP_BUFFER_START_SIZE;
             this->output_buffer = (char *)malloc(this->current_buffer_size);
             this->buffer_pos = 0;
             if (this->output_buffer == NULL) {
@@ -66,9 +64,8 @@ esp_err_t BvgApiClient::http_event_handler(esp_http_client_event_t *evt) {
         ESP_LOGD(TAG, "HTTP_EVENT_ON_FINISH");
         this->buffer_pos = 0;
         break;
-    // TODO Figure out when this happens and if we're handling it correctly
     case HTTP_EVENT_DISCONNECTED:
-        ESP_LOGE(TAG, "HTTP_EVENT_DISCONNECTED");
+        ESP_LOGD(TAG, "HTTP_EVENT_DISCONNECTED");
         free(this->output_buffer);
         this->output_buffer = NULL;
         buffer_pos = 0;
@@ -80,7 +77,21 @@ esp_err_t BvgApiClient::http_event_handler(esp_http_client_event_t *evt) {
     return ESP_OK;
 }
 
+void BvgApiClient::setUrl(const std::string &stationId) {
+    std::string url =
+        "https://v6.bvg.transport.rest/stops/" + stationId + "/departures?results=" + std::to_string(N_RESULTS);
+    esp_http_client_set_url(client, url.c_str());
+}
+
 std::vector<Trip> BvgApiClient::fetchAndParseTrips() {
+    NVSEngine nvs_engine("depmon");
+    std::string stationId;
+    auto err = nvs_engine.readString("current_station", &stationId);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to read current station from NVS");
+        return {};
+    }
+    this->setUrl(stationId);
     esp_http_client_perform(client);
 
     if (this->output_buffer == NULL) {
@@ -88,7 +99,7 @@ std::vector<Trip> BvgApiClient::fetchAndParseTrips() {
         return {};
     }
 
-    StaticJsonDocument<200> filter;
+    DynamicJsonDocument filter(128);
     filter["departures"][0]["tripId"] = true;
     filter["departures"][0]["direction"] = true;
     filter["departures"][0]["line"]["name"] = true;
@@ -96,7 +107,7 @@ std::vector<Trip> BvgApiClient::fetchAndParseTrips() {
 
     DynamicJsonDocument doc(this->MAX_JSON_DOC_SIZE);
     // TODO It would be cool to use a std::istream here, would probably save memory too.
-    DeserializationError error = deserializeJson(doc, this->output_buffer, DeserializationOption::Filter(filter));
+    auto error = deserializeJson(doc, this->output_buffer, DeserializationOption::Filter(filter));
     if (error) {
         ESP_LOGE(TAG, "Failed to parse JSON: %s", error.c_str());
         return {};
@@ -104,7 +115,7 @@ std::vector<Trip> BvgApiClient::fetchAndParseTrips() {
 
     JsonArray departures = doc["departures"];
     auto departure_count = departures.size();
-    ESP_LOGI(TAG, "Got %d departures", departure_count);
+    ESP_LOGD(TAG, "Got %d departures", departure_count);
 
     std::vector<Trip> trips;
     trips.reserve(departure_count);

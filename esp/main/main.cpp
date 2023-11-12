@@ -7,7 +7,6 @@
 #include <freertos/event_groups.h>
 #include <lwip/apps/netbiosns.h>
 #include <mdns.h>
-#include <nvs_flash.h>
 #include <sys/param.h>
 #include <thread>
 #include <wifi_provisioning/manager.h>
@@ -16,6 +15,7 @@
 #include "bvg_api_client.hpp"
 #include "http_server.hpp"
 #include "lcd.hpp"
+#include "nvs_engine.hpp"
 #include "time.hpp"
 #include "ui.hpp"
 #include "utils.hpp"
@@ -110,17 +110,6 @@ static void init_mdns_and_netbios(void) {
     netbiosns_set_name("depmon");
 }
 
-static void init_nvs() {
-    /* Initialize NVS partition */
-    esp_err_t ret = nvs_flash_init();
-    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-        /* NVS partition was truncated and needs to be erased */
-        ESP_ERROR_CHECK(nvs_flash_erase());
-        /* Retry nvs_flash_init */
-        ESP_ERROR_CHECK(nvs_flash_init());
-    }
-}
-
 /** Will have format `PROV_2A3B4C` */
 std::string getProvisioningSSID() {
     uint8_t eth_mac[6];
@@ -169,22 +158,27 @@ void init_network_wifi_and_wifimanager() {
 QueueHandle_t departuresRefreshQueue = xQueueCreate(1, sizeof(uint8_t));
 
 void fetch_and_process_trips(BvgApiClient &apiClient) {
+    ESP_LOGD(TAG, "Fetching trips...");
     auto trips = apiClient.fetchAndParseTrips();
+    ESP_LOGD(TAG, "Fetched and parsed %d trips", trips.size());
 
     if (trips.empty()) {
         ESP_LOGE(TAG, "No trips found!");
         return;
     }
 
-    ESP_LOGI(TAG, "Found %d trips", trips.size());
-
-    departures_screen.clean();
-    const auto now = Time::timePointNow();
-    for (auto trip : trips) {
-        const auto timeToDeparture = trip.departureTime - now;
-        departures_screen.addItem(trip.lineName, trip.directionName,
-                                  std::chrono::duration_cast<std::chrono::seconds>(timeToDeparture));
+    {
+        // Do a clean update of the screen by locking the mutex
+        const std::lock_guard<std::recursive_mutex> lock(lvgl_mutex);
+        departures_screen.clean();
+        const auto now = Time::timePointNow();
+        for (auto trip : trips) {
+            const auto timeToDeparture = trip.departureTime - now;
+            departures_screen.addItem(trip.lineName, trip.directionName,
+                                      std::chrono::duration_cast<std::chrono::seconds>(timeToDeparture));
+        }
     }
+    ESP_LOGD(TAG, "Done processing trips");
 }
 
 void DeparturesRefresherTask(void *pvParameter) {
@@ -222,7 +216,7 @@ extern "C" void app_main(void) {
     LVGL_LCD::init();
     UIManager::init();
 
-    init_nvs();
+    NVSEngine::init();
     init_network_wifi_and_wifimanager();
 
     // 3356 (words, = 13424 bytes) is the max observed used stack
