@@ -4,6 +4,7 @@ on: [push]
 
 jobs:
   build_esp:
+    timeout-minutes: 10
     runs-on: ubuntu-latest
 
     steps:
@@ -34,6 +35,7 @@ jobs:
           /bin/bash -c 'git config --global --add safe.directory "*" && idf.py build'
 
   build_simulator:
+    timeout-minutes: 10
     runs-on: ubuntu-latest
 
     steps:
