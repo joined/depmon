@@ -132,7 +132,7 @@ static esp_err_t api_get_version_handler(httpd_req_t *req) {
     doc["project_name"] = app_description->project_name;
     doc["compile_time"] = app_description->time;
     doc["compile_date"] = app_description->date;
-    char buffer[64];
+    char buffer[192];
     serializeJson(doc, buffer);
     httpd_resp_sendstr(req, buffer);
     return ESP_OK;
