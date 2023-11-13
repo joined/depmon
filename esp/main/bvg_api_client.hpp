@@ -2,14 +2,15 @@
 
 #include <ctime>
 #include <esp_http_client.h>
+#include <optional>
 #include <string>
 #include <vector>
 
 struct Trip {
-    std::string tripId;
-    std::chrono::system_clock::time_point departureTime;
-    std::string directionName;
-    std::string lineName;
+    const std::string tripId;
+    const std::optional<std::chrono::system_clock::time_point> departureTime;
+    const std::string directionName;
+    const std::string lineName;
 };
 
 class BvgApiClient {

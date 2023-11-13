@@ -49,8 +49,18 @@ iSO8601StringToTimePoint(const std::string &iso8601) {
     std::tm t = {};
     // F: Equivalent to %Y-%m-%d, the ISO 8601 date format.
     // T: ISO 8601 time format (HH:MM:SS), equivalent to %H:%M:%S
-    // z: ISO 8601 offset from UTC in timezone (1 minute=1, 1 hour=100). If timezone cannot be determined, no characters
-    strptime(iso8601.c_str(), "%FT%T%z", &t);
-    return std::chrono::time_point<std::chrono::system_clock, std::chrono::seconds>(std::chrono::seconds(mktime(&t)));
+    // TODO We should handle the timezone here, but the `%z` specifier is not supported by newlib. For now we just always assume same as local time.
+    auto result = strptime(iso8601.c_str(), "%FT%T", &t);
+    if (result == nullptr) {
+        ESP_LOGE(TAG, "Failed to parse ISO8601 string: %s", iso8601.c_str());
+        return std::chrono::time_point<std::chrono::system_clock, std::chrono::seconds>();
+    }
+
+    auto time = mktime(&t);
+    if (time == -1) {
+        ESP_LOGE(TAG, "Failed to convert std::tm to std::time_t");
+        return std::chrono::time_point<std::chrono::system_clock, std::chrono::seconds>();
+    }
+    return std::chrono::time_point<std::chrono::system_clock, std::chrono::seconds>(std::chrono::seconds(time));
 }
 } // namespace Time
