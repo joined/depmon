@@ -99,13 +99,13 @@ std::vector<Trip> BvgApiClient::fetchAndParseTrips() {
         return {};
     }
 
-    DynamicJsonDocument filter(128);
+    JsonDocument filter;
     filter["departures"][0]["tripId"] = true;
     filter["departures"][0]["direction"] = true;
     filter["departures"][0]["line"]["name"] = true;
     filter["departures"][0]["when"] = true;
 
-    DynamicJsonDocument doc(this->MAX_JSON_DOC_SIZE);
+    JsonDocument doc;
     // TODO It would be cool to use a std::istream here, would probably save memory too.
     auto error = deserializeJson(doc, this->output_buffer, DeserializationOption::Filter(filter));
     if (error) {

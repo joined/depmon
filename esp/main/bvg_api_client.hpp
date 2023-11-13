@@ -26,7 +26,6 @@ class BvgApiClient {
     int buffer_pos;
 
     static constexpr const int HTTP_BUFFER_START_SIZE = 15 * 1024;
-    static constexpr const int MAX_JSON_DOC_SIZE = 8 * 1024;
     static constexpr const double BUFFER_GROWTH_FACTOR = 1.5;
     static constexpr const int N_RESULTS = 12;
     size_t current_buffer_size;

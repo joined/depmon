@@ -1,10 +1,11 @@
 dependencies:
   bblanchon/arduinojson:
-    component_hash: c111ebf785c5e3cb5a3f8902584b03e25d929a3651976b5a57054bfa941ffc74
+    component_hash: fe60a14fc4e7f60d78825f1f4acec59196bf59d4374f80ef74532b784461d714
     source:
-      service_url: https://api.components.espressif.com/
-      type: service
-    version: 6.21.3
+      git: ssh://git@github.com/bblanchon/ArduinoJson.git
+      path: .
+      type: git
+    version: f7dcea562ffd859b6852c4ee82578ba56c1d46da
   espressif/esp_lcd_st7796:
     component_hash: fa118bf3d2177a98ecd864e510a54a3fd3a954bc8725ebdeef8f958a5bd5cef3
     source:
@@ -46,6 +47,6 @@ dependencies:
       service_url: https://api.components.espressif.com/
       type: service
     version: 8.3.10
-manifest_hash: e98757036994dae91e0db656f70247d051e64b21f9ab22ba96198e40bbcfd4f9
+manifest_hash: 0e898d94abd1be4b08684117b0e486471480a0c14b759e4c06759e7b73d43d95
 target: esp32
 version: 1.0.0
