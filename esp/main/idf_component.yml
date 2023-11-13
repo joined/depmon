@@ -1,6 +1,8 @@
 ## IDF Component Manager Manifest File
 dependencies:
-  bblanchon/arduinojson: "^6.21.3"
+  bblanchon/arduinojson:
+    version: 7.x
+    git: ssh://git@github.com/bblanchon/ArduinoJson.git
   espressif/mdns: "^1.2.1"
   espressif/esp_lcd_st7796: "^1.0.0"
   espressif/esp_lcd_touch_gt911: "^1.0.7~1"

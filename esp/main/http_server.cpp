@@ -125,7 +125,7 @@ static esp_err_t rest_common_get_handler(httpd_req_t *req) {
 
 static esp_err_t api_get_version_handler(httpd_req_t *req) {
     httpd_resp_set_type(req, "application/json");
-    DynamicJsonDocument doc(128);
+    JsonDocument doc;
     const esp_app_desc_t *app_description = esp_app_get_description();
     doc["version"] = app_description->version;
     doc["idf_version"] = app_description->idf_ver;
@@ -143,7 +143,7 @@ static esp_err_t api_get_current_station_handler(httpd_req_t *req) {
     std::string current_station;
     NVSEngine nvs_engine("depmon");
     auto err = nvs_engine.readString("current_station", &current_station);
-    DynamicJsonDocument doc(32);
+    JsonDocument doc;
     if (err != ESP_OK) {
         doc["id"] = nullptr;
     } else {
@@ -171,7 +171,7 @@ static esp_err_t api_set_current_station_handler(httpd_req_t *req) {
          * ensure that the underlying socket is closed */
         return ESP_FAIL;
     }
-    DynamicJsonDocument doc(32);
+    JsonDocument doc;
     auto error = deserializeJson(doc, content);
     if (error) {
         httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Invalid JSON");
