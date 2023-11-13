@@ -2,13 +2,19 @@
 
 #include <chrono>
 #include <mutex>
+#include <optional>
 #include <string>
 #include "lvgl.h"
 
 inline std::recursive_mutex lvgl_mutex;
 
+/* Used for the small text in the departures panel */
 LV_FONT_DECLARE(montserrat_regular_16);
-LV_FONT_DECLARE(montserrat_regular_28);
+/* Used for the line and the ETD in the departures panel */
+LV_FONT_DECLARE(roboto_condensed_light_28_4bpp);
+/* Used for the direction in the departures panel. Special features: has `⟲⟳` symbols (U+27F2 and U+27F3, for Ringbahn). */
+LV_FONT_DECLARE(roboto_condensed_regular_28_4bpp);
+/* Used for the big title in the splash screen. Has only the "DepMon" characters. */
 LV_FONT_DECLARE(montserrat_regular_96);
 
 class Screen {
@@ -50,7 +56,7 @@ class DeparturesScreen : public Screen {
     void init();
     void addRandomDepartureItem();
     void addItem(const std::string &line_text, const std::string &direction_text,
-                 const std::chrono::seconds &time_to_departure);
+                 const std::optional<std::chrono::seconds> &time_to_departure);
     void clean();
 
   private:

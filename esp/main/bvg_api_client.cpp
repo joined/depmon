@@ -14,7 +14,8 @@ static const char *TAG = "BvgApiClient";
 
 BvgApiClient::BvgApiClient(const std::string &stationId) {
     esp_http_client_config_t config = {
-        .url = "https://www.google.com",  // Set later
+        .url = "https://www.google.com", // Set later
+        .timeout_ms = 10000,             // Seems to help with timeout issues
         .event_handler =
             [](esp_http_client_event_t *evt) {
                 auto self = static_cast<BvgApiClient *>(evt->user_data);
@@ -92,7 +93,12 @@ std::vector<Trip> BvgApiClient::fetchAndParseTrips() {
         return {};
     }
     this->setUrl(stationId);
-    esp_http_client_perform(client);
+    err = esp_http_client_perform(client);
+
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "HTTP GET request failed: %s", esp_err_to_name(err));
+        return {};
+    }
 
     if (this->output_buffer == NULL) {
         ESP_LOGE(TAG, "No response buffer, something went wrong");
@@ -120,16 +126,19 @@ std::vector<Trip> BvgApiClient::fetchAndParseTrips() {
     std::vector<Trip> trips;
     trips.reserve(departure_count);
 
+    Trip trip;
     for (auto departure : departures) {
         const char *tripId = departure["tripId"];
         const char *direction = departure["direction"];
         const char *line = departure["line"]["name"];
-        const char *when = departure["when"];
 
-        trips.push_back({.tripId = tripId,
-                         .departureTime = Time::iSO8601StringToTimePoint(when),
-                         .directionName = direction,
-                         .lineName = line});
+        const auto departure_time =
+            departure["when"].isNull()
+                ? std::nullopt
+                : std::make_optional(Time::iSO8601StringToTimePoint(static_cast<const char *>(departure["when"])));
+
+        trips.push_back(
+            {.tripId = tripId, .departureTime = departure_time, .directionName = direction, .lineName = line});
     }
 
     free(this->output_buffer);

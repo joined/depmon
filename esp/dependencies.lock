@@ -2,7 +2,7 @@ dependencies:
   bblanchon/arduinojson:
     component_hash: fe60a14fc4e7f60d78825f1f4acec59196bf59d4374f80ef74532b784461d714
     source:
-      git: ssh://git@github.com/bblanchon/ArduinoJson.git
+      git: https://github.com/bblanchon/ArduinoJson.git
       path: .
       type: git
     version: f7dcea562ffd859b6852c4ee82578ba56c1d46da
@@ -47,6 +47,6 @@ dependencies:
       service_url: https://api.components.espressif.com/
       type: service
     version: 8.3.10
-manifest_hash: 0e898d94abd1be4b08684117b0e486471480a0c14b759e4c06759e7b73d43d95
+manifest_hash: e4a45eb9f8f03b77d4ffc369ccd463bd5dac42d2c9f78dfea4bc0f863fc83228
 target: esp32
 version: 1.0.0

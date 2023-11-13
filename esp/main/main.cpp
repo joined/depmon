@@ -168,14 +168,18 @@ void fetch_and_process_trips(BvgApiClient &apiClient) {
     }
 
     {
+        // TODO Instead of cleaning the screen and then adding the items, we should just update the items
         // Do a clean update of the screen by locking the mutex
         const std::lock_guard<std::recursive_mutex> lock(lvgl_mutex);
         departures_screen.clean();
         const auto now = Time::timePointNow();
         for (auto trip : trips) {
-            const auto timeToDeparture = trip.departureTime - now;
-            departures_screen.addItem(trip.lineName, trip.directionName,
-                                      std::chrono::duration_cast<std::chrono::seconds>(timeToDeparture));
+            const auto timeToDeparture = trip.departureTime.has_value()
+                                             ? std::make_optional(std::chrono::duration_cast<std::chrono::seconds>(
+                                                   trip.departureTime.value() - now))
+                                             : std::nullopt;
+
+            departures_screen.addItem(trip.lineName, trip.directionName, timeToDeparture);
         }
     }
     ESP_LOGD(TAG, "Done processing trips");
@@ -220,7 +224,7 @@ extern "C" void app_main(void) {
     init_network_wifi_and_wifimanager();
 
     // 3356 (words, = 13424 bytes) is the max observed used stack
-    xTaskCreatePinnedToCore(DeparturesRefresherTask, "DeparturesRefresherTask", 4096, NULL, 1, NULL, 0);
+    xTaskCreatePinnedToCore(DeparturesRefresherTask, "DeparturesRefresherTask", 4096, NULL, 1, NULL, 1);
 
     bool provisioned = false;
     /* Let's find out if the device is provisioned */
@@ -261,6 +265,7 @@ extern "C" void app_main(void) {
 
     setup_http_server();
 
+    // TODO We should avoid starting the timer before we have a valid time from NTP
     Time::initSNTP();
 
     departures_screen.switchTo();
