@@ -20,7 +20,7 @@ void printHealthStats(const std::string &tag) {
 }
 
 /* Will have format `1A:2B:3C:4D:5E:6F` if separated, `1A2B3C4D5E6F` if not */
-std::string getMacString(const bool &separated = false) {
+std::string getMacString(const bool &separated) {
     uint8_t mac[6];
     esp_efuse_mac_get_default(mac);
 
