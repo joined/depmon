@@ -3,6 +3,8 @@
 #include <esp_http_client.h>
 #include <esp_log.h>
 #include <map>
+#include <memory>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -14,17 +16,72 @@ static const char *TAG = "BvgApiClient";
 
 const std::vector<std::string> ALL_PRODUCTS = {"suburban", "subway", "tram", "bus", "ferry", "express", "regional"};
 
+class HTTPInputStream : public std::streambuf {
+  public:
+    HTTPInputStream(esp_http_client_handle_t client) : client(client) {
+        setg(buffer, buffer, buffer); // Set get pointers to the beginning
+    }
+
+  protected:
+    // TODO This works, but there are still timeout issues from time to time and it's kinda slow (maybe opening / closing
+    // the connection is too expensive?) Yes it is
+    int_type underflow() override {
+        ESP_LOGI(TAG, "underflowstart");
+        if (this->client == nullptr) {
+            ESP_LOGE(TAG, "Tried to read from stream before client was initialized");
+            return traits_type::eof();
+        }
+
+        if (this->isOpen == false) {
+            esp_err_t err = esp_http_client_open(client, 0);
+            if (err != ESP_OK) {
+                ESP_LOGE(TAG, "Failed to open HTTP connection");
+                return traits_type::eof(); // End of stream
+            }
+            this->isOpen = true;
+            ESP_LOGI(TAG, "HTTP connection opened");
+
+            auto content_length = esp_http_client_fetch_headers(client);
+            if (content_length < 0) {
+                ESP_LOGE(TAG, "HTTP client fetch headers failed");
+                return traits_type::eof(); // End of stream
+            }
+        }
+
+        if (gptr() < egptr()) {
+            return traits_type::to_int_type(*gptr());
+        }
+
+        int bytes_read = esp_http_client_read(client, buffer, BUFFER_SIZE);
+        ESP_LOGI(TAG, "Read %d bytes", bytes_read);
+        if (bytes_read <= 0) {
+            ESP_LOGE(TAG, "Error reading from HTTP client");
+            return traits_type::eof(); // End of stream
+        }
+
+        if (bytes_read < BUFFER_SIZE) {
+            ESP_LOGI(TAG, "Closing HTTP client");
+            esp_http_client_close(client);
+        }
+
+        setg(buffer, buffer, buffer + bytes_read);
+
+        return traits_type::to_int_type(*gptr());
+    }
+
+  private:
+    esp_http_client_handle_t client;
+    bool isOpen = false;
+    static const constexpr size_t BUFFER_SIZE = 1024 * 10;
+    char buffer[BUFFER_SIZE];
+};
+
 BvgApiClient::BvgApiClient(const std::string &stationId) {
     esp_http_client_config_t config = {
         .url = "https://www.google.com", // Set later
         .user_agent = "DepMon gasparini.lorenzo@gmail.com",
         .timeout_ms = 10000, // Seems to help with timeout issues
-        .event_handler =
-            [](esp_http_client_event_t *evt) {
-                auto self = static_cast<BvgApiClient *>(evt->user_data);
-                return self->http_event_handler(evt);
-            },
-        .user_data = this,
+        .is_async = false,
     };
     client = esp_http_client_init(&config);
     esp_http_client_set_method(client, HTTP_METHOD_GET);
@@ -32,54 +89,6 @@ BvgApiClient::BvgApiClient(const std::string &stationId) {
 }
 
 BvgApiClient::~BvgApiClient() { esp_http_client_cleanup(client); }
-
-esp_err_t BvgApiClient::http_event_handler(esp_http_client_event_t *evt) {
-    switch (evt->event_id) {
-    case HTTP_EVENT_ON_DATA:
-        ESP_LOGD(TAG, "HTTP_EVENT_ON_DATA, data_len=%d", evt->data_len);
-        ESP_LOGD(TAG, "Current buffer size: %d", this->current_buffer_size);
-        ESP_LOGD(TAG, "Current buffer_pos: %d", buffer_pos);
-
-        if (this->output_buffer == NULL) {
-            this->current_buffer_size = HTTP_BUFFER_START_SIZE;
-            this->output_buffer = (char *)malloc(this->current_buffer_size);
-            this->buffer_pos = 0;
-            if (this->output_buffer == NULL) {
-                ESP_LOGE(TAG, "Failed to allocate memory for output buffer");
-                return ESP_FAIL;
-            }
-        } else {
-            while (this->buffer_pos + evt->data_len >= this->current_buffer_size) {
-                ESP_LOGD(TAG, "Would overflow buffer, reallocating");
-                this->current_buffer_size *= this->BUFFER_GROWTH_FACTOR;
-                this->output_buffer = (char *)realloc(this->output_buffer, this->current_buffer_size);
-
-                if (this->output_buffer == NULL) {
-                    ESP_LOGE(TAG, "Failed to reallocate memory for output buffer");
-                    return ESP_FAIL;
-                }
-            }
-        }
-        memcpy(this->output_buffer + buffer_pos, evt->data, evt->data_len);
-        this->buffer_pos += evt->data_len;
-        break;
-
-    case HTTP_EVENT_ON_FINISH:
-        ESP_LOGD(TAG, "HTTP_EVENT_ON_FINISH");
-        this->buffer_pos = 0;
-        break;
-    case HTTP_EVENT_DISCONNECTED:
-        ESP_LOGD(TAG, "HTTP_EVENT_DISCONNECTED");
-        free(this->output_buffer);
-        this->output_buffer = NULL;
-        buffer_pos = 0;
-        break;
-    default:
-        break;
-    }
-
-    return ESP_OK;
-}
 
 void BvgApiClient::setUrl(const std::string &stationId, const std::vector<std::string> &enabledProducts) {
     // TODO store and read number of results from NVS. keep in mind that memory is limited.
@@ -122,11 +131,6 @@ std::vector<Trip> BvgApiClient::fetchAndParseTrips(const std::string &stationId,
         return {};
     }
 
-    if (this->output_buffer == NULL) {
-        ESP_LOGE(TAG, "No response buffer, something went wrong");
-        return {};
-    }
-
     JsonDocument filter;
     filter["departures"][0]["tripId"] = true;
     filter["departures"][0]["direction"] = true;
@@ -134,10 +138,12 @@ std::vector<Trip> BvgApiClient::fetchAndParseTrips(const std::string &stationId,
     filter["departures"][0]["when"] = true;
 
     JsonDocument doc;
-    // TODO It would be cool to use a std::istream here, would probably save memory too.
-    auto deserializationError = deserializeJson(doc, this->output_buffer, DeserializationOption::Filter(filter));
-    if (deserializationError) {
-        ESP_LOGE(TAG, "Failed to parse JSON: %s", deserializationError.c_str());
+    // TODO Extract stream creation to a function (easier said than done)
+    std::unique_ptr<HTTPInputStream> inputStream(new HTTPInputStream(client));
+    std::istream stream(inputStream.get());
+    auto error = deserializeJson(doc, stream, DeserializationOption::Filter(filter));
+    if (error) {
+        ESP_LOGE(TAG, "Failed to parse JSON: %s", error.c_str());
         return {};
     }
 
@@ -155,16 +161,13 @@ std::vector<Trip> BvgApiClient::fetchAndParseTrips(const std::string &stationId,
         const char *line = departure["line"]["name"];
 
         const auto departure_time =
-            departure["when"].isNull()
+            departure["when"] == nullptr
                 ? std::nullopt
                 : std::make_optional(Time::iSO8601StringToTimePoint(static_cast<const char *>(departure["when"])));
 
         trips.push_back(
             {.tripId = tripId, .departureTime = departure_time, .directionName = direction, .lineName = line});
     }
-
-    free(this->output_buffer);
-    this->output_buffer = NULL;
 
     return trips;
 }
