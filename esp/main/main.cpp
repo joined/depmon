@@ -98,9 +98,14 @@ static void provisioning_event_handler(void *arg, esp_event_base_t event_base, i
 }
 
 static void init_mdns_and_netbios(void) {
+    // TODO Handle collision problem better, idea: do a query before setting the hostname and check if someone else
+    // on the network is already using it. If so, append a number to the hostname.
+    const auto uniqueTag = getUniqueTag("depmon-");
+    // TODO We should display this tag somewhere, otherwise how do we know how to connect to the device?
+    ESP_LOGI(TAG, "Unique tag: %s", uniqueTag.c_str());
     ESP_ERROR_CHECK(mdns_init());
-    ESP_ERROR_CHECK(mdns_hostname_set("depmon"));
-    ESP_ERROR_CHECK(mdns_instance_name_set("DepMon"));
+    ESP_ERROR_CHECK(mdns_hostname_set(uniqueTag.c_str()));
+    ESP_ERROR_CHECK(mdns_instance_name_set(uniqueTag.c_str()));
 
     mdns_txt_item_t serviceTxtData[] = {{"board", "esp32"}, {"path", "/"}};
     ESP_ERROR_CHECK(mdns_service_add("DepMon Configuration Server", "_http", "_tcp", 80, serviceTxtData,
@@ -109,19 +114,6 @@ static void init_mdns_and_netbios(void) {
     netbiosns_init();
     netbiosns_set_name("depmon");
 }
-
-/** Will have format `PROV_2A3B4C` */
-std::string getProvisioningSSID() {
-    uint8_t eth_mac[6];
-    esp_wifi_get_mac(WIFI_IF_STA, eth_mac);
-
-    const std::string ssid_prefix = "PROV_";
-    char service_name[12];
-    snprintf(service_name, sizeof(service_name), "%s%02X%02X%02X", ssid_prefix.c_str(), eth_mac[3], eth_mac[4],
-             eth_mac[5]);
-
-    return std::string(service_name);
-};
 
 static void wifi_prov_print_qr(const std::string &name) {
     const std::string payload = "{\"ver\":\"v1\",\"name\":\"" + name + "\",\"transport\":\"softap\"}";
@@ -223,8 +215,8 @@ extern "C" void app_main(void) {
     NVSEngine::init();
     init_network_wifi_and_wifimanager();
 
-    // 3356 (words, = 13424 bytes) is the max observed used stack
-    xTaskCreatePinnedToCore(DeparturesRefresherTask, "DeparturesRefresherTask", 4096, NULL, 1, NULL, 1);
+    // 4076 (words, = 16304 bytes) is the max observed used stack
+    xTaskCreatePinnedToCore(DeparturesRefresherTask, "DeparturesRefresherTask", 8192, NULL, 1, NULL, 1);
 
     bool provisioned = false;
     /* Let's find out if the device is provisioned */
@@ -233,7 +225,7 @@ extern "C" void app_main(void) {
     if (!provisioned) {
         ESP_LOGI(TAG, "Starting provisioning");
 
-        std::string service_name = getProvisioningSSID();
+        std::string service_name = getUniqueTag("DepMon-Provisioning-");
         ESP_ERROR_CHECK(wifi_prov_mgr_start_provisioning(WIFI_PROV_SECURITY_0, nullptr, service_name.c_str(), nullptr));
         logs_screen.switchTo();
         logs_screen.addLogLine("It looks like you're trying to set up your device.");

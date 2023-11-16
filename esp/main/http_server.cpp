@@ -2,6 +2,7 @@
 #include <esp_app_desc.h>
 #include <esp_http_server.h>
 #include <esp_log.h>
+#include <esp_mac.h>
 #include <esp_random.h>
 #include <esp_spiffs.h>
 #include <esp_system.h>
@@ -11,13 +12,12 @@
 
 #include "http_server.hpp"
 #include "nvs_engine.hpp"
+#include "utils.hpp"
 
-// 20KB scratch buffer for temporary storage during file transfer
-#define SCRATCH_BUFSIZE (20480)
-
-// Used when reading files from the filesystem
-static char scratch[SCRATCH_BUFSIZE];
-
+static const constexpr size_t FS_READ_BUFFER_SIZE = 30 * 1024;
+// TODO It's a bit of a waste to have this static buffer, can we do better?
+// Ideally we'd be using memory only when the request is being handled.
+static char scratch[FS_READ_BUFFER_SIZE];
 static const char *TAG = "http_server";
 
 static esp_err_t init_fs(void) {
@@ -85,7 +85,6 @@ static esp_err_t rest_common_get_handler(httpd_req_t *req) {
     int file_descriptor = open(filepath.c_str(), O_RDONLY, 0);
     if (file_descriptor == -1) {
         ESP_LOGE(TAG, "Failed to open file : %s", filepath.c_str());
-        /* Respond with 500 Internal Server Error */
         httpd_resp_send_err(req, HTTPD_404_NOT_FOUND, "File not found");
         return ESP_FAIL;
     }
@@ -99,7 +98,7 @@ static esp_err_t rest_common_get_handler(httpd_req_t *req) {
     ssize_t read_bytes;
     do {
         /* Read file in chunks into the scratch buffer */
-        read_bytes = read(file_descriptor, chunk, SCRATCH_BUFSIZE);
+        read_bytes = read(file_descriptor, chunk, FS_READ_BUFFER_SIZE);
         if (read_bytes == -1) {
             ESP_LOGE(TAG, "Failed to read file : %s", filepath.c_str());
         } else if (read_bytes > 0) {
@@ -123,7 +122,7 @@ static esp_err_t rest_common_get_handler(httpd_req_t *req) {
     return ESP_OK;
 }
 
-static esp_err_t api_get_version_handler(httpd_req_t *req) {
+static esp_err_t api_get_sysinfo_handler(httpd_req_t *req) {
     httpd_resp_set_type(req, "application/json");
     JsonDocument doc;
     const esp_app_desc_t *app_description = esp_app_get_description();
@@ -132,8 +131,13 @@ static esp_err_t api_get_version_handler(httpd_req_t *req) {
     doc["project_name"] = app_description->project_name;
     doc["compile_time"] = app_description->time;
     doc["compile_date"] = app_description->date;
-    char buffer[192];
-    serializeJson(doc, buffer);
+    doc["mac_address"] = getMacString(true);
+    char buffer[256];
+    const auto bytes_written = serializeJson(doc, buffer);
+    if (bytes_written == 0) {
+        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to serialize JSON");
+        return ESP_FAIL;
+    }
     httpd_resp_sendstr(req, buffer);
     return ESP_OK;
 }
@@ -150,7 +154,11 @@ static esp_err_t api_get_current_station_handler(httpd_req_t *req) {
         doc["id"] = current_station;
     }
     char buffer[64];
-    serializeJson(doc, buffer);
+    const auto bytes_written = serializeJson(doc, buffer);
+    if (bytes_written == 0) {
+        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to serialize JSON");
+        return ESP_FAIL;
+    }
     httpd_resp_sendstr(req, buffer);
     return ESP_OK;
 }
@@ -199,12 +207,12 @@ httpd_handle_t setup_http_server() {
 
     ESP_ERROR_CHECK(httpd_start(&server, &config));
 
-    httpd_uri_t api_get_version_uri = {
-        .uri = "/api/version",
+    httpd_uri_t api_get_sysinfo_uri = {
+        .uri = "/api/sysinfo",
         .method = HTTP_GET,
-        .handler = api_get_version_handler,
+        .handler = api_get_sysinfo_handler,
     };
-    httpd_register_uri_handler(server, &api_get_version_uri);
+    httpd_register_uri_handler(server, &api_get_sysinfo_uri);
 
     httpd_uri_t api_get_current_station_uri = {
         .uri = "/api/currentstation",
