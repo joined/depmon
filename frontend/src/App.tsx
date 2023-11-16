@@ -160,23 +160,24 @@ export function StationSelector() {
     );
 }
 
-interface VersionResponse {
+interface SysInfoResponse {
     version: string;
     idf_version: string;
     project_name: string;
     compile_time: string;
     compile_date: string;
+    mac_address: string;
 }
 
-const VersionInfo = () => {
-    const { data, error, isLoading } = useSWRImmutable<VersionResponse>('/api/version', getRequestSender);
+const SysInfo = () => {
+    const { data, error, isLoading } = useSWRImmutable<SysInfoResponse>('/api/sysinfo', getRequestSender);
 
     if (isLoading) {
         return <CircularProgress color="secondary" />;
     }
 
     if (error) {
-        return <p>Error loading version information.</p>;
+        return <p>Error loading system information.</p>;
     }
 
     return (
@@ -195,6 +196,9 @@ const VersionInfo = () => {
             </li>
             <li>
                 <strong>Compile date:</strong> {data!.compile_date}
+            </li>
+            <li>
+                <strong>MAC address:</strong> {data!.mac_address}
             </li>
         </ul>
     );
@@ -218,7 +222,7 @@ const App = () => {
                 <Typography variant="h3" gutterBottom>
                     Version information
                 </Typography>
-                <VersionInfo />
+                <SysInfo />
             </main>
         </ThemeProvider>
     );

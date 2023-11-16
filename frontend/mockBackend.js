@@ -6,7 +6,7 @@ let currentStationId = null;
 
 app.use(express.json());
 
-app.get('/version', (req, res) => {
+app.get('/sysinfo', (req, res) => {
     res.send(
         JSON.stringify({
             version: 'Mock version',
@@ -14,6 +14,7 @@ app.get('/version', (req, res) => {
             project_name: 'Mock project name',
             compile_time: 'Mock compile time',
             compile_date: 'Mock compile date',
+            mac_address: '1A:2B:3C:4D:5E:6F',
         })
     );
 });
