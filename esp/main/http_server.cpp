@@ -252,7 +252,7 @@ static esp_err_t api_set_current_station_handler(httpd_req_t *req) {
 httpd_handle_t setup_http_server() {
     init_fs();
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
-    config.stack_size = 1024 * 6;
+    config.stack_size = 1024 * 5;
     config.uri_match_fn = httpd_uri_match_wildcard;
     httpd_handle_t server = NULL;
 

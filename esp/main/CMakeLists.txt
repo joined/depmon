@@ -18,6 +18,7 @@ else()
         message(FATAL_ERROR "`yarn` not found, please install it.")
     endif()
 
+    # TODO This breaks if the dev server is running, fix it
     ExternalProject_Add(
         build_frontend
         PREFIX ${CMAKE_BINARY_DIR}/build_frontend
