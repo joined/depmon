@@ -214,7 +214,7 @@ extern "C" void app_main(void) {
     init_network_wifi_and_wifimanager();
 
     // 4076 (words, = 16304 bytes) is the max observed used stack
-    xTaskCreatePinnedToCore(DeparturesRefresherTask, "DeparturesRefresherTask", 1024 * 6, NULL, 1, NULL, 1);
+    xTaskCreatePinnedToCore(DeparturesRefresherTask, "DeparturesRefresherTask", 1024 * 5, NULL, 1, NULL, 1);
 
     bool provisioned = false;
     /* Let's find out if the device is provisioned */

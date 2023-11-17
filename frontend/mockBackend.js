@@ -28,24 +28,14 @@ app.get('/sysinfo', (req, res) => {
             },
             ...(enableTrace
                 ? {
-                      tasks: [
-                          {
-                              name: 'TaskWithPrettyLongName',
-                              priority: 1,
-                              state: 1,
-                              stack_high_water_mark: 123456,
-                              runtime: enableRuntime ? 12 : null,
-                              core_id: enableCoreId ? 0 : null,
-                          },
-                          {
-                              name: 'task2',
-                              priority: 2,
-                              state: 2,
-                              stack_high_water_mark: 23456,
-                              runtime: enableRuntime ? 23 : null,
-                              core_id: enableCoreId ? 1 : null,
-                          },
-                      ],
+                      tasks: [...Array(10)].map((_, index) => ({
+                          name: `TaskNumber${index}`,
+                          priority: index,
+                          state: Math.floor(Math.random() * 6),
+                          stack_high_water_mark: Math.floor(Math.random() * 10000),
+                          runtime: enableRuntime ? Math.floor(Math.random() * 100) : null,
+                          core_id: enableCoreId ? Math.floor(Math.random() * 2) : null,
+                      })),
                   }
                 : null),
         })
