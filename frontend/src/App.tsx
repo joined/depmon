@@ -8,8 +8,15 @@ import {
     Button,
     CircularProgress,
     CssBaseline,
+    Paper,
     Snackbar,
     Stack,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
     TextField,
     ThemeProvider,
     Typography,
@@ -160,17 +167,65 @@ export function StationSelector() {
     );
 }
 
-interface SysInfoResponse {
-    version: string;
+const TASK_STATUS_TO_STRING: { [key: number]: string } = {
+    0: 'RUNNING',
+    1: 'READY',
+    2: 'BLOCKED',
+    3: 'SUSPENDED',
+    4: 'DELETED',
+    5: 'INVALID',
+};
+
+const KEY_TO_LABEL: { [key: string]: string } = {
+    idf_version: 'IDF version',
+    project_name: 'Project name',
+    compile_time: 'Compile time',
+    compile_date: 'Compile date',
+    free_heap: 'Free heap',
+    minimum_free_heap: 'Minimum free heap',
+    mac_address: 'MAC address',
+};
+
+interface SysInfoSoftwareResponse {
     idf_version: string;
     project_name: string;
     compile_time: string;
     compile_date: string;
+}
+
+interface SysInfoHardwareResponse {
     mac_address: string;
 }
 
+interface SysInfoMemoryResponse {
+    free_heap: number;
+    minimum_free_heap: number;
+}
+
+interface SysInfoTaskResponse {
+    name: string;
+    priority: number;
+    state: number;
+    stack_high_water_mark: number;
+    runtime: number | null;
+    core_id: number | null;
+}
+
+interface SysInfoResponse {
+    software: SysInfoSoftwareResponse;
+    hardware: SysInfoHardwareResponse;
+    memory: SysInfoMemoryResponse;
+    tasks: SysInfoTaskResponse[] | null;
+}
+
+const bottomMarginStyle = css`
+    margin-bottom: 16px;
+`;
+
 const SysInfo = () => {
-    const { data, error, isLoading } = useSWRImmutable<SysInfoResponse>('/api/sysinfo', getRequestSender);
+    const { data, error, isLoading } = useSWRImmutable<SysInfoResponse>('/api/sysinfo', getRequestSender, {
+        refreshInterval: 2000,
+    });
 
     if (isLoading) {
         return <CircularProgress color="secondary" />;
@@ -180,27 +235,105 @@ const SysInfo = () => {
         return <p>Error loading system information.</p>;
     }
 
+    // TODO Map the task state to a string.
+
     return (
-        <ul>
-            <li>
-                <strong>Version:</strong> {data!.version}
-            </li>
-            <li>
-                <strong>ESP-IDF version:</strong> {data!.idf_version}
-            </li>
-            <li>
-                <strong>Project name:</strong> {data!.project_name}
-            </li>
-            <li>
-                <strong>Compile time:</strong> {data!.compile_time}
-            </li>
-            <li>
-                <strong>Compile date:</strong> {data!.compile_date}
-            </li>
-            <li>
-                <strong>MAC address:</strong> {data!.mac_address}
-            </li>
-        </ul>
+        <>
+            <TableContainer component={Paper} className={bottomMarginStyle}>
+                <Table>
+                    <TableBody>
+                        {(
+                            ['idf_version', 'project_name', 'compile_time', 'compile_date'] satisfies Array<
+                                keyof SysInfoSoftwareResponse
+                            >
+                        ).map((key) => (
+                            <TableRow key={key} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                                <TableCell component="th" scope="row">
+                                    {KEY_TO_LABEL[key] || key}
+                                </TableCell>
+                                <TableCell align="right">{data!.software[key]}</TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </TableContainer>
+            <TableContainer component={Paper} className={bottomMarginStyle}>
+                <Table>
+                    <TableBody>
+                        {(['free_heap', 'minimum_free_heap'] satisfies Array<keyof SysInfoMemoryResponse>).map(
+                            (key) => (
+                                <TableRow key={key} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                                    <TableCell component="th" scope="row">
+                                        {KEY_TO_LABEL[key] || key}
+                                    </TableCell>
+                                    <TableCell align="right">{data!.memory[key]}</TableCell>
+                                </TableRow>
+                            )
+                        )}
+                    </TableBody>
+                </Table>
+            </TableContainer>
+            <TableContainer component={Paper} className={bottomMarginStyle}>
+                <Table>
+                    <TableBody>
+                        {(['mac_address'] satisfies Array<keyof SysInfoHardwareResponse>).map((key) => (
+                            <TableRow key={key} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                                <TableCell component="th" scope="row">
+                                    {KEY_TO_LABEL[key] || key}
+                                </TableCell>
+                                <TableCell align="right">{data!.hardware[key]}</TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </TableContainer>
+            {data!.tasks ? (
+                <TableContainer component={Paper} className={bottomMarginStyle}>
+                    <Table size="medium">
+                        <TableHead>
+                            <TableRow>
+                                <TableCell>Name</TableCell>
+                                <TableCell align="right">Priority</TableCell>
+                                <TableCell align="right">Stack high watermark</TableCell>
+                                <TableCell align="right">State</TableCell>
+                                {data!.tasks[0].runtime !== null ? <TableCell align="right">Runtime</TableCell> : null}
+                                {data!.tasks[0].core_id !== null ? <TableCell align="right">Core ID</TableCell> : null}
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {data!.tasks.map((task) => (
+                                <TableRow key={task.name} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                                    {(
+                                        ['name', 'priority', 'stack_high_water_mark'] satisfies Array<
+                                            keyof SysInfoTaskResponse
+                                        >
+                                    ).map((key) => (
+                                        <TableCell
+                                            align="right"
+                                            className={
+                                                key === 'name'
+                                                    ? css`
+                                                          word-break: break-all;
+                                                      `
+                                                    : undefined
+                                            }>
+                                            {task[key]}
+                                        </TableCell>
+                                    ))}
+                                    <TableCell align="right">{TASK_STATUS_TO_STRING[task.state]}</TableCell>
+                                    {task.runtime !== null ? (
+                                        <TableCell align="right">{task.runtime}%</TableCell>
+                                    ) : null}
+                                    {task.core_id !== null ? <TableCell align="right">{task.core_id}</TableCell> : null}
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+            ) : (
+                <p>Task trace facility disabled.</p>
+            )}
+        </>
     );
 };
 

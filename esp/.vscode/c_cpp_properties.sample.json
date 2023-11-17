@@ -11,6 +11,7 @@
             "compilerPath": "/home/myusername/.espressif/tools/xtensa-esp32-elf/esp-12.2.0_20230208/xtensa-esp32-elf/bin/xtensa-esp32-elf-gcc",
             "includePath": [
                 "${workspaceFolder}/build/config/*",
+                "${config:idf.espIdfPath}/components/freertos/FreeRTOS-Kernel/include",
                 "${config:idf.espIdfPath}/components/esp_timer/include",
                 "${workspaceFolder}/managed_components/espressif__mdns/include",
                 "${config:idf.espIdfPath}/components/**",
