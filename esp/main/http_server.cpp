@@ -124,21 +124,71 @@ static esp_err_t rest_common_get_handler(httpd_req_t *req) {
 
 static esp_err_t api_get_sysinfo_handler(httpd_req_t *req) {
     httpd_resp_set_type(req, "application/json");
+
     JsonDocument doc;
+    auto software = doc["software"].to<JsonObject>();
     const esp_app_desc_t *app_description = esp_app_get_description();
-    doc["version"] = app_description->version;
-    doc["idf_version"] = app_description->idf_ver;
-    doc["project_name"] = app_description->project_name;
-    doc["compile_time"] = app_description->time;
-    doc["compile_date"] = app_description->date;
-    doc["mac_address"] = getMacString(true);
-    char buffer[256];
-    const auto bytes_written = serializeJson(doc, buffer);
-    if (bytes_written == 0) {
+    software["version"] = app_description->version;
+    software["idf_version"] = app_description->idf_ver;
+    software["project_name"] = app_description->project_name;
+    software["compile_time"] = app_description->time;
+    software["compile_date"] = app_description->date;
+
+    auto hardware = doc["hardware"].to<JsonObject>();
+    hardware["mac_address"] = getMacString(true);
+
+    auto memory = doc["memory"].to<JsonObject>();
+    memory["free_heap"] = esp_get_free_heap_size();
+    memory["minimum_free_heap"] = esp_get_minimum_free_heap_size();
+    // TODO The followin line seems to be causing panics. Investigate.
+    // memory["largest_free_heap_block"] = heap_caps_get_largest_free_block(MALLOC_CAP_DEFAULT);
+
+#ifdef CONFIG_FREERTOS_USE_TRACE_FACILITY
+    const auto task_count = uxTaskGetNumberOfTasks();
+    TaskStatus_t *pxTaskStatusArray = (TaskStatus_t *)malloc(sizeof(TaskStatus_t) * task_count);
+    if (pxTaskStatusArray == nullptr) {
+        ESP_LOGE(TAG, "Failed to allocate memory for task status array");
+    } else {
+        auto tasks = doc["tasks"].to<JsonArray>();
+#ifdef CONFIG_FREERTOS_GENERATE_RUN_TIME_STATS
+        unsigned long ulTotalRunTime;
+        uxTaskGetSystemState(pxTaskStatusArray, task_count, &ulTotalRunTime);
+        ulTotalRunTime /= 100UL;
+#else
+        uxTaskGetSystemState(pxTaskStatusArray, task_count, nullptr);
+#endif
+        for (auto i = 0; i < task_count; i++) {
+            TaskStatus_t task = pxTaskStatusArray[i];
+            auto task_json = tasks.add<JsonObject>();
+            task_json["name"] = task.pcTaskName;
+            task_json["priority"] = task.uxCurrentPriority;
+            task_json["state"] = task.eCurrentState;
+            task_json["stack_high_water_mark"] = task.usStackHighWaterMark;
+#ifdef CONFIG_FREERTOS_VTASKLIST_INCLUDE_COREID
+            int core_id = task.xCoreID;
+            task_json["core_id"] = core_id == INT32_MAX ? -1 : core_id;
+#else
+            task_json["core_id"] = nullptr;
+#endif
+#ifdef CONFIG_FREERTOS_GENERATE_RUN_TIME_STATS
+            task_json["runtime"] = task.ulRunTimeCounter / ulTotalRunTime;
+#else
+            task_json["runtime"] = nullptr;
+#endif
+        }
+        free(pxTaskStatusArray);
+    }
+#else
+    doc["tasks"] = nullptr;
+#endif
+
+    char buffer[2048];
+    const auto bytesWritten = serializeJson(doc, buffer);
+    if (bytesWritten == 0) {
         httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to serialize JSON");
         return ESP_FAIL;
     }
-    httpd_resp_sendstr(req, buffer);
+    httpd_resp_send(req, buffer, bytesWritten);
     return ESP_OK;
 }
 
@@ -154,12 +204,12 @@ static esp_err_t api_get_current_station_handler(httpd_req_t *req) {
         doc["id"] = current_station;
     }
     char buffer[64];
-    const auto bytes_written = serializeJson(doc, buffer);
-    if (bytes_written == 0) {
+    const auto bytesWritten = serializeJson(doc, buffer);
+    if (bytesWritten == 0) {
         httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to serialize JSON");
         return ESP_FAIL;
     }
-    httpd_resp_sendstr(req, buffer);
+    httpd_resp_send(req, buffer, bytesWritten);
     return ESP_OK;
 }
 
@@ -202,6 +252,7 @@ static esp_err_t api_set_current_station_handler(httpd_req_t *req) {
 httpd_handle_t setup_http_server() {
     init_fs();
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
+    config.stack_size = 1024 * 6;
     config.uri_match_fn = httpd_uri_match_wildcard;
     httpd_handle_t server = NULL;
 
