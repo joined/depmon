@@ -2,19 +2,13 @@
   "compilerOptions": {
     "baseUrl": ".",
     "esModuleInterop": true,
-    "jsx": "react",
-    "jsxFactory": "h",
-    "jsxFragmentFactory": "Fragment",
+    "jsx": "react-jsx",
     "lib": ["dom", "esnext"],
     "module": "esnext",
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "strict": true,
     "target": "es5",
-    "paths": {
-      "react": ["./node_modules/preact/compat/"],
-      "react-dom": ["./node_modules/preact/compat/"]
-    }
   },
   "include": ["src/**/*"]
 }
