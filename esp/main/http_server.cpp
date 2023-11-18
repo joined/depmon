@@ -8,15 +8,19 @@
 #include <esp_system.h>
 #include <esp_vfs.h>
 #include <fcntl.h>
+#include <ranges>
 #include <string>
+#include <vector>
 
 #include "http_server.hpp"
 #include "nvs_engine.hpp"
+#include "time.hpp"
 #include "utils.hpp"
 
 static const constexpr size_t FS_READ_BUFFER_SIZE = 30 * 1024;
 // TODO It's a bit of a waste to have this static buffer, can we do better?
 // Ideally we'd be using memory only when the request is being handled.
+// -> should probably increase stack size of the httpd task to make it a local buffer
 static char scratch[FS_READ_BUFFER_SIZE];
 static const char *TAG = "http_server";
 
@@ -67,12 +71,15 @@ static esp_err_t set_content_type_from_file(httpd_req_t *req, const std::string 
     return httpd_resp_set_type(req, type);
 }
 
+const std::vector<std::string> INDEX_ROUTES = {"/", "/sysinfo"};
+
 /* Send HTTP response with the contents of the requested file */
 static esp_err_t rest_common_get_handler(httpd_req_t *req) {
     // TODO Make this more dynamic
     std::string filepath = "/www";
     const std::string uri = req->uri;
-    if (uri.ends_with("/")) {
+    const auto is_index_route = std::ranges::find(INDEX_ROUTES, uri) != INDEX_ROUTES.end();
+    if (is_index_route) {
         filepath += "/index.html";
     } else {
         filepath += uri;
@@ -91,6 +98,11 @@ static esp_err_t rest_common_get_handler(httpd_req_t *req) {
 
     set_content_type_from_file(req, filepath);
     httpd_resp_set_hdr(req, "Content-Encoding", "gzip");
+
+    if (!is_index_route) {
+        // Assets like CSS and JS have a cache busting hash in their filename.
+        httpd_resp_set_hdr(req, "Cache-Control", "public, max-age=604800, immutable");
+    }
 
     ESP_LOGD(TAG, "Starting to send response for file: %s", filepath.c_str());
 
@@ -134,6 +146,13 @@ static esp_err_t api_get_sysinfo_handler(httpd_req_t *req) {
     software["compile_time"] = app_description->time;
     software["compile_date"] = app_description->date;
 
+    auto app_state = doc["app_state"].to<JsonObject>();
+    // TODO What if time is not configured?
+    auto time = Time::epochMillis();
+    ESP_LOGI(TAG, "Time: %lu", time);
+    app_state["time"] = time;
+    app_state["mdns_hostname"] = getMDNSHostname() + ".local";
+
     auto hardware = doc["hardware"].to<JsonObject>();
     hardware["mac_address"] = getMacString(true);
 
@@ -142,6 +161,8 @@ static esp_err_t api_get_sysinfo_handler(httpd_req_t *req) {
     memory["minimum_free_heap"] = esp_get_minimum_free_heap_size();
     // TODO The followin line seems to be causing panics. Investigate.
     // memory["largest_free_heap_block"] = heap_caps_get_largest_free_block(MALLOC_CAP_DEFAULT);
+
+    // TODO Add total runtime?
 
 #ifdef CONFIG_FREERTOS_USE_TRACE_FACILITY
     const auto task_count = uxTaskGetNumberOfTasks();
