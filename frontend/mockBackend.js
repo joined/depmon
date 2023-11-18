@@ -12,6 +12,10 @@ app.get('/sysinfo', (req, res) => {
     const enableCoreId = true;
     res.send(
         JSON.stringify({
+            app_state: {
+                time: Date.now(),
+                mdns_hostname: 'depmon-fake.local',
+            },
             software: {
                 version: 'Mock version',
                 idf_version: 'Mock IDF version',

@@ -38,6 +38,11 @@ esp_err_t initSNTP() {
 }
 
 const std::chrono::system_clock::time_point timePointNow() { return std::chrono::system_clock::now(); }
+
+unsigned long epochMillis() {
+    return (std::chrono::duration_cast<std::chrono::milliseconds>(timePointNow().time_since_epoch())).count();
+}
+
 std::string timeNowAscii() {
     const std::time_t timeNow{std::chrono::system_clock::to_time_t(timePointNow())};
 
@@ -49,7 +54,8 @@ iSO8601StringToTimePoint(const std::string &iso8601) {
     std::tm t = {};
     // F: Equivalent to %Y-%m-%d, the ISO 8601 date format.
     // T: ISO 8601 time format (HH:MM:SS), equivalent to %H:%M:%S
-    // TODO We should handle the timezone here, but the `%z` specifier is not supported by newlib. For now we just always assume same as local time.
+    // TODO We should handle the timezone here, but the `%z` specifier is not supported by newlib. For now we just
+    // always assume same as local time.
     auto result = strptime(iso8601.c_str(), "%FT%T", &t);
     if (result == nullptr) {
         ESP_LOGE(TAG, "Failed to parse ISO8601 string: %s", iso8601.c_str());
