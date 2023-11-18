@@ -13,9 +13,7 @@ import {
 } from '@mui/material';
 import match from 'autosuggest-highlight/match';
 import parse from 'autosuggest-highlight/parse';
-import { h, Fragment } from 'preact';
-import { useState, useMemo, useEffect } from 'preact/hooks';
-import { RoutableProps } from 'preact-router';
+import { useState, useMemo, useEffect, HTMLAttributes } from 'react';
 import useSWRImmutable from 'swr/immutable';
 import useSWRMutation from 'swr/mutation';
 import { CurrentStationPostRequest } from 'src/api/Requests';
@@ -23,8 +21,7 @@ import { CurrentStationGetResponse } from 'src/api/Responses';
 import { Station, stations } from 'src/stations';
 import { getRequestSender, postRequestSender } from 'src/util/Ajax';
 
-// eslint-disable-next-line no-unused-vars
-export function HomeTab(props: RoutableProps) {
+export function HomeTab() {
     const [selectedStation, setSelectedStation] = useState<Station | null>(null);
     const [inputValue, setInputValue] = useState('');
     const [isSnackbarOpen, setSnackbarOpen] = useState(false);
@@ -70,7 +67,7 @@ export function HomeTab(props: RoutableProps) {
     }, [data]);
 
     const renderOption = (
-        props: h.JSX.HTMLAttributes<HTMLLIElement>,
+        props: HTMLAttributes<HTMLLIElement>,
         option: Station,
         state: AutocompleteRenderOptionState
     ) => {
@@ -126,7 +123,7 @@ export function HomeTab(props: RoutableProps) {
                             setInputValue(newInputValue);
                         }}
                         value={selectedStation}
-                        onChange={(event: any, newStation: Station | null) => {
+                        onChange={(event, newStation) => {
                             setSelectedStation(newStation);
                         }}
                         sx={{ width: 300 }}

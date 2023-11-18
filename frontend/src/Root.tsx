@@ -17,12 +17,9 @@ import {
     Typography,
     createTheme,
 } from '@mui/material';
-import { h } from 'preact';
-import { useState } from 'preact/compat';
+import { useState } from 'react';
 
-import { route as navigate, Router } from 'preact-router';
-import { HomeTab } from './components/HomeTab/HomeTab';
-import { SystemInformationTab } from './components/SystemInformationTab/SystemInformationTab';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { RouteConfig } from './Types';
 import { DRAWER_WIDTH } from './util/Constants';
 
@@ -32,38 +29,43 @@ const theme = createTheme({
     },
 });
 
-const ROUTES: RouteConfig[] = [
+export const ROUTES: Array<RouteConfig> = [
     {
         path: '/',
         name: 'Home',
         drawerIcon: <HomeIcon />,
-        tabComponent: HomeTab,
     },
     {
         path: '/sysinfo',
         name: 'System information',
         drawerIcon: <InfoIcon />,
-        tabComponent: SystemInformationTab,
     },
 ];
 
-const NavigationDrawerContent = () => (
-    <List>
-        {ROUTES.map((route) => (
-            <ListItem key={route.path} disablePadding>
-                <ListItemButton
-                    onClick={() => {
-                        navigate(route.path);
-                    }}>
-                    <ListItemIcon>{route.drawerIcon}</ListItemIcon>
-                    <ListItemText primary={route.name} />
-                </ListItemButton>
-            </ListItem>
-        ))}
-    </List>
-);
+const NavigationDrawerContent = ({ onNavigation }: { onNavigation?: VoidFunction }) => {
+    const navigate = useNavigate();
+    const { pathname } = useLocation();
 
-const App = () => {
+    return (
+        <List>
+            {ROUTES.map((route) => (
+                <ListItem key={route.path} disablePadding>
+                    <ListItemButton
+                        selected={pathname === route.path}
+                        onClick={() => {
+                            onNavigation?.();
+                            navigate(route.path);
+                        }}>
+                        <ListItemIcon>{route.drawerIcon}</ListItemIcon>
+                        <ListItemText primary={route.name} />
+                    </ListItemButton>
+                </ListItem>
+            ))}
+        </List>
+    );
+};
+
+export const Root = () => {
     const [mobileOpen, setMobileOpen] = useState(false);
 
     return (
@@ -90,10 +92,7 @@ const App = () => {
                         </Typography>
                     </Toolbar>
                 </AppBar>
-                <Box
-                    component="nav"
-                    sx={{ width: { sm: DRAWER_WIDTH }, flexShrink: { sm: 0 } }}
-                    aria-label="mailbox folders">
+                <Box component="nav" sx={{ width: { sm: DRAWER_WIDTH }, flexShrink: { sm: 0 } }}>
                     <Drawer
                         variant="temporary"
                         open={mobileOpen}
@@ -107,7 +106,11 @@ const App = () => {
                             display: { xs: 'block', sm: 'none' },
                             '& .MuiDrawer-paper': { boxSizing: 'border-box', width: DRAWER_WIDTH },
                         }}>
-                        <NavigationDrawerContent />
+                        <NavigationDrawerContent
+                            onNavigation={() => {
+                                setMobileOpen(false);
+                            }}
+                        />
                     </Drawer>
                     <Drawer
                         variant="permanent"
@@ -121,16 +124,9 @@ const App = () => {
                 </Box>
                 <Box component="main" sx={{ flexGrow: 1, p: 3, width: { sm: `calc(100% - ${DRAWER_WIDTH}px)` } }}>
                     <Toolbar />
-                    <Router>
-                        {/* TODO Make these work in the ESP backend */}
-                        {ROUTES.map((route) => (
-                            <route.tabComponent key={route.path} path={route.path} />
-                        ))}
-                    </Router>
+                    <Outlet />
                 </Box>
             </Box>
         </ThemeProvider>
     );
 };
-
-export default App;

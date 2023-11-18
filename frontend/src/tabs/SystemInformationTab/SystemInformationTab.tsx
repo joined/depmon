@@ -19,9 +19,7 @@ import {
     TableCell,
     TableHead,
 } from '@mui/material';
-import { h, Fragment } from 'preact';
-import { useState } from 'preact/hooks';
-import { RoutableProps } from 'preact-router';
+import React, { useState } from 'react';
 import useSWRImmutable from 'swr/immutable';
 import {
     SysInfoResponse,
@@ -31,8 +29,9 @@ import {
     SysInfoTaskResponse,
 } from 'src/api/Responses';
 import { getRequestSender } from 'src/util/Ajax';
+import { SYS_INFO_REFRESH_INTERVAL } from 'src/util/Constants';
 
-const TASK_STATUS_TO_ICON: { [key: number]: h.JSX.Element } = {
+const TASK_STATUS_TO_ICON: { [key: number]: React.ReactElement } = {
     0: <DirectionsRunIcon />, // Running
     1: <AlarmOnIcon />, // Ready
     2: <BlockIcon />, // Blocked
@@ -181,11 +180,10 @@ const TaskTable = (props: { data: NonNullable<SysInfoResponse['tasks']> }) => (
     </TableContainer>
 );
 
-// eslint-disable-next-line no-unused-vars
-export const SystemInformationTab = (props: RoutableProps) => {
+export const SystemInformationTab = () => {
     const [isAutoRefreshEnabled, setAutoRefreshEnabled] = useState(false);
     const { data, error, isLoading } = useSWRImmutable<SysInfoResponse>('/api/sysinfo', getRequestSender, {
-        refreshInterval: isAutoRefreshEnabled ? 2000 : 0,
+        refreshInterval: isAutoRefreshEnabled ? SYS_INFO_REFRESH_INTERVAL : 0,
     });
 
     if (isLoading) {
@@ -209,12 +207,12 @@ export const SystemInformationTab = (props: RoutableProps) => {
                     control={
                         <Checkbox
                             checked={isAutoRefreshEnabled}
-                            onInput={(event: Event) =>
-                                setAutoRefreshEnabled((event.target as HTMLInputElement).checked)
-                            }
+                            onChange={(event) => {
+                                setAutoRefreshEnabled(event.target.checked);
+                            }}
                         />
                     }
-                    label="Auto-refresh every 2s"
+                    label={`Auto-refresh every ${Math.floor(SYS_INFO_REFRESH_INTERVAL / 1000)}s`}
                 />
             </FormGroup>
             <Typography variant="h4" gutterBottom>
