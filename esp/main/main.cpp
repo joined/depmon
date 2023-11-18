@@ -100,7 +100,7 @@ static void provisioning_event_handler(void *arg, esp_event_base_t event_base, i
 static void init_mdns_and_netbios(void) {
     // TODO Handle collision problem better, idea: do a query before setting the hostname and check if someone else
     // on the network is already using it. If so, append a number to the hostname.
-    const auto uniqueTag = getUniqueTag("depmon-");
+    const auto uniqueTag = getMDNSHostname();
     // TODO We should display this tag somewhere, otherwise how do we know how to connect to the device?
     ESP_LOGI(TAG, "Unique tag: %s", uniqueTag.c_str());
     ESP_ERROR_CHECK(mdns_init());
@@ -223,7 +223,7 @@ extern "C" void app_main(void) {
     if (!provisioned) {
         ESP_LOGI(TAG, "Starting provisioning");
 
-        std::string service_name = getUniqueTag("DepMon-Provisioning-");
+        std::string service_name = getProvisioningSSID();
         ESP_ERROR_CHECK(wifi_prov_mgr_start_provisioning(WIFI_PROV_SECURITY_0, nullptr, service_name.c_str(), nullptr));
         logs_screen.switchTo();
         logs_screen.addLogLine("It looks like you're trying to set up your device.");

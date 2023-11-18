@@ -30,9 +30,12 @@ std::string getMacString(const bool &separated) {
     return std::string(mac_string);
 }
 
-/* Will have format `PREFIX2A3` */
-std::string getUniqueTag(const std::string &prefix) {
-    // TODO Are MACs random enough? Should we pass this through a hash function?
+std::string getMDNSHostname() {
     const auto mac = getMacString(false);
-    return prefix + mac.substr(0, 3);
+    return "depmon-" + mac.substr(9, 3);
+}
+
+std::string getProvisioningSSID() {
+    const auto mac = getMacString(false);
+    return "DEPMON_" + mac.substr(9, 3);
 }
