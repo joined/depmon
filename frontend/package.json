@@ -1,6 +1,8 @@
 {
     "private": true,
     "scripts": {
+        "lint:frontend:eslint": "eslint .",
+        "lint:frontend:ts": "tsc --noEmit",
         "prebuild": "rm -rf dist",
         "start": "parcel src/index.html & nodemon mockBackend.js",
         "start:no-backend": "parcel src/index.html",
