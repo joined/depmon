@@ -3,6 +3,7 @@
     "baseUrl": ".",
     "esModuleInterop": true,
     "jsx": "react-jsx",
+    "jsxImportSource": "@emotion/react",
     "lib": ["dom", "esnext"],
     "module": "esnext",
     "moduleResolution": "node",

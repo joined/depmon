@@ -1,3 +1,5 @@
+import { LineProductType, ParsedStationLine } from "src/Types";
+
 export interface SysInfoAppStateResponse {
     time: number | null;
     mdns_hostname: string;
@@ -14,7 +16,7 @@ export interface SysInfoHardwareResponse {
     mac_address: string;
 }
 
-export  interface SysInfoMemoryResponse {
+export interface SysInfoMemoryResponse {
     free_heap: number;
     minimum_free_heap: number;
 }
@@ -33,10 +35,25 @@ export interface SysInfoResponse {
     software: SysInfoSoftwareResponse;
     hardware: SysInfoHardwareResponse;
     memory: SysInfoMemoryResponse;
-    tasks: SysInfoTaskResponse[] | null;
+    tasks: Array<SysInfoTaskResponse> | null;
 }
 
+export type LocationsQueryLineResponse = {
+    id: string;
+    name: string;
+    product: LineProductType;
+};
+
+export interface LocationsQueryResponseItem {
+    id: string;
+    name: string;
+    lines: Array<LocationsQueryLineResponse>;
+}
+
+export type LocationsQueryGetResponse = Array<LocationsQueryResponseItem>;
 
 export interface CurrentStationGetResponse {
     id: string;
+    name: string;
+    lines: Array<ParsedStationLine>;
 }
