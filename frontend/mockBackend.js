@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 const port = 3000;
 
-let currentStationId = null;
+let currentStation = null;
 
 app.use(express.json());
 
@@ -48,16 +48,14 @@ app.get('/sysinfo', (req, res) => {
 
 app.get('/currentstation', (req, res) => {
     res.send(
-        JSON.stringify({
-            id: currentStationId,
-        })
+        JSON.stringify(currentStation)
     );
 });
 
 app.post('/currentstation', (req, res) => {
     // Fail 20% of the time
     if (Math.random() < 0.8) {
-        currentStationId = req.body.id;
+        currentStation = req.body;
         res.send();
     } else {
         res.status(500).send();

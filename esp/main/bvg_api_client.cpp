@@ -87,13 +87,13 @@ void BvgApiClient::setUrl(const std::string &stationId) {
 
 std::vector<Trip> BvgApiClient::fetchAndParseTrips() {
     NVSEngine nvs_engine("depmon");
-    std::string stationId;
-    auto err = nvs_engine.readString("current_station", &stationId);
-    if (err != ESP_OK) {
-        ESP_LOGE(TAG, "Failed to read current station from NVS");
+
+    JsonDocument currentStationDoc;
+    auto err = nvs_engine.readCurrentStation(&currentStationDoc);
+    if (err) {
         return {};
     }
-    this->setUrl(stationId);
+    this->setUrl(currentStationDoc["id"]);
     err = esp_http_client_perform(client);
 
     if (err != ESP_OK) {
@@ -114,9 +114,9 @@ std::vector<Trip> BvgApiClient::fetchAndParseTrips() {
 
     JsonDocument doc;
     // TODO It would be cool to use a std::istream here, would probably save memory too.
-    auto error = deserializeJson(doc, this->output_buffer, DeserializationOption::Filter(filter));
-    if (error) {
-        ESP_LOGE(TAG, "Failed to parse JSON: %s", error.c_str());
+    auto deserializationError = deserializeJson(doc, this->output_buffer, DeserializationOption::Filter(filter));
+    if (deserializationError) {
+        ESP_LOGE(TAG, "Failed to parse JSON: %s", deserializationError.c_str());
         return {};
     }
 

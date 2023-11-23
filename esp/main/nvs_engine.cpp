@@ -4,13 +4,13 @@
 
 static const char *TAG = "NVS";
 
-NVSEngine::NVSEngine(const std::string nspace, nvs_open_mode mode) {
-    nvs_open(nspace.c_str(), mode, &this->handle);
-};
+// TODO Have a version number for the NVS namespace so that we can migrate data
+// On opening the NVS, we should check the version number and erase the NVS if
+// it's not the current version
 
-NVSEngine::~NVSEngine() {
-    nvs_close(this->handle);
-};
+NVSEngine::NVSEngine(const std::string nspace, nvs_open_mode mode) { nvs_open(nspace.c_str(), mode, &this->handle); };
+
+NVSEngine::~NVSEngine() { nvs_close(this->handle); };
 
 void NVSEngine::init() {
     esp_err_t err = nvs_flash_init();
@@ -34,6 +34,32 @@ esp_err_t NVSEngine::readString(const std::string &key, std::string *result) {
     return ESP_OK;
 };
 
+esp_err_t NVSEngine::readCurrentStation(JsonDocument *doc) {
+    std::string currentStation;
+    auto err = this->readString("current_station", &currentStation);
+    if (err != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to read current station from NVS");
+        return err;
+    }
+
+    JsonDocument currentStationIdFilter;
+    currentStationIdFilter["id"] = true;
+
+    auto deserializationError =
+        deserializeJson(*doc, currentStation, DeserializationOption::Filter(currentStationIdFilter));
+    if (deserializationError) {
+        ESP_LOGE(TAG, "Failed to parse JSON: %s", deserializationError.c_str());
+        return ESP_FAIL;
+    }
+
+    return ESP_OK;
+};
+
 esp_err_t NVSEngine::setString(const std::string &key, const std::string &value) {
-    return nvs_set_str(this->handle, key.c_str(), value.c_str());
+    auto err = nvs_set_str(this->handle, key.c_str(), value.c_str());
+    if (err) {
+        return err;
+    }
+    err = nvs_commit(this->handle);
+    return err;
 };

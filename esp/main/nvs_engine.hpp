@@ -1,3 +1,4 @@
+#include <ArduinoJson.h>
 #include <esp_err.h>
 #include <nvs_flash.h>
 #include <string>
@@ -9,6 +10,7 @@ class NVSEngine {
     static void init();
     esp_err_t readString(const std::string &key, std::string *result);
     esp_err_t setString(const std::string &key, const std::string &value);
+    esp_err_t readCurrentStation(JsonDocument *doc);
 
   private:
     nvs_handle_t handle;

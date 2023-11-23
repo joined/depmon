@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css } from '@emotion/react';
 import AlarmOnIcon from '@mui/icons-material/AlarmOn';
 import BlockIcon from '@mui/icons-material/Block';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -18,6 +18,7 @@ import {
     TableRow,
     TableCell,
     TableHead,
+    Box,
 } from '@mui/material';
 import React, { useState } from 'react';
 import useSWRImmutable from 'swr/immutable';
@@ -63,10 +64,10 @@ const lastTableRowStyle = css`
 `;
 
 const AppStateTable = (props: { data: SysInfoResponse['app_state'] }) => (
-    <TableContainer component={Paper} className={bottomMarginStyle}>
+    <TableContainer component={Paper} css={bottomMarginStyle}>
         <Table>
             <TableBody>
-                <TableRow key={'time'} className={lastTableRowStyle}>
+                <TableRow key={'time'} css={lastTableRowStyle}>
                     <TableCell component="th" scope="row">
                         {KEY_TO_LABEL['time']}
                     </TableCell>
@@ -74,7 +75,7 @@ const AppStateTable = (props: { data: SysInfoResponse['app_state'] }) => (
                         {props.data.time ? new Date(props.data.time).toISOString() : 'Not set'}
                     </TableCell>
                 </TableRow>
-                <TableRow key={'mdns_hostname'} className={lastTableRowStyle}>
+                <TableRow key={'mdns_hostname'} css={lastTableRowStyle}>
                     <TableCell component="th" scope="row">
                         {KEY_TO_LABEL['mdns_hostname']}
                     </TableCell>
@@ -86,7 +87,7 @@ const AppStateTable = (props: { data: SysInfoResponse['app_state'] }) => (
 );
 
 const SoftwareTable = (props: { data: SysInfoResponse['software'] }) => (
-    <TableContainer component={Paper} className={bottomMarginStyle}>
+    <TableContainer component={Paper} css={bottomMarginStyle}>
         <Table>
             <TableBody>
                 {(
@@ -94,7 +95,7 @@ const SoftwareTable = (props: { data: SysInfoResponse['software'] }) => (
                         keyof SysInfoSoftwareResponse
                     >
                 ).map((key) => (
-                    <TableRow key={key} className={lastTableRowStyle}>
+                    <TableRow key={key} css={lastTableRowStyle}>
                         <TableCell component="th" scope="row">
                             {KEY_TO_LABEL[key] || key}
                         </TableCell>
@@ -107,11 +108,11 @@ const SoftwareTable = (props: { data: SysInfoResponse['software'] }) => (
 );
 
 const MemoryTable = (props: { data: SysInfoResponse['memory'] }) => (
-    <TableContainer component={Paper} className={bottomMarginStyle}>
+    <TableContainer component={Paper} css={bottomMarginStyle}>
         <Table>
             <TableBody>
                 {(['free_heap', 'minimum_free_heap'] satisfies Array<keyof SysInfoMemoryResponse>).map((key) => (
-                    <TableRow key={key} className={lastTableRowStyle}>
+                    <TableRow key={key} css={lastTableRowStyle}>
                         <TableCell component="th" scope="row">
                             {KEY_TO_LABEL[key] || key}
                         </TableCell>
@@ -125,11 +126,12 @@ const MemoryTable = (props: { data: SysInfoResponse['memory'] }) => (
 
 const HardwareTable = (props: { data: SysInfoResponse['hardware'] }) => (
     // TODO Maybe use small variant of the table when there's little space?
-    <TableContainer component={Paper} className={bottomMarginStyle}>
+    <TableContainer component={Paper} css={bottomMarginStyle}>
         <Table>
             <TableBody>
+                {/* TODO Add ESP version */}
                 {(['mac_address'] satisfies Array<keyof SysInfoHardwareResponse>).map((key) => (
-                    <TableRow key={key} className={lastTableRowStyle}>
+                    <TableRow key={key} css={lastTableRowStyle}>
                         <TableCell component="th" scope="row">
                             {KEY_TO_LABEL[key] || key}
                         </TableCell>
@@ -142,7 +144,7 @@ const HardwareTable = (props: { data: SysInfoResponse['hardware'] }) => (
 );
 
 const TaskTable = (props: { data: NonNullable<SysInfoResponse['tasks']> }) => (
-    <TableContainer component={Paper} className={bottomMarginStyle}>
+    <TableContainer component={Paper} css={bottomMarginStyle}>
         <Table>
             <TableHead>
                 <TableRow>
@@ -156,9 +158,9 @@ const TaskTable = (props: { data: NonNullable<SysInfoResponse['tasks']> }) => (
             </TableHead>
             <TableBody>
                 {props.data.map((task) => (
-                    <TableRow key={task.name} className={lastTableRowStyle}>
+                    <TableRow key={`${task.name}-${task.core_id}`} css={lastTableRowStyle}>
                         <TableCell
-                            className={css`
+                            css={css`
                                 word-break: break-all;
                             `}>
                             {task.name}
@@ -195,12 +197,12 @@ export const SystemInformationTab = () => {
     }
 
     return (
-        <>
+        <Box sx={{ maxWidth: 800 }}>
             <Typography variant="h3" gutterBottom>
                 System information
             </Typography>
             <FormGroup
-                className={css`
+                css={css`
                     margin-bottom: 16px;
                 `}>
                 <FormControlLabel
@@ -238,7 +240,7 @@ export const SystemInformationTab = () => {
                     </Typography>
                     {/* TODO This wrapper div is weird */}
                     <div
-                        className={css`
+                        css={css`
                             max-width: calc(100vw - 64px);
                         `}>
                         <TaskTable data={data!.tasks} />
@@ -247,6 +249,6 @@ export const SystemInformationTab = () => {
             ) : (
                 <p>Task trace facility disabled.</p>
             )}
-        </>
+        </Box>
     );
 };

@@ -150,6 +150,7 @@ static esp_err_t api_get_sysinfo_handler(httpd_req_t *req) {
     // TODO What if time is not configured?
     auto time = Time::epochMillis();
     ESP_LOGI(TAG, "Time: %lu", time);
+    // TODO This time is wrong, why?
     app_state["time"] = time;
     app_state["mdns_hostname"] = getMDNSHostname() + ".local";
 
@@ -218,24 +219,17 @@ static esp_err_t api_get_current_station_handler(httpd_req_t *req) {
     std::string current_station;
     NVSEngine nvs_engine("depmon");
     auto err = nvs_engine.readString("current_station", &current_station);
-    JsonDocument doc;
     if (err != ESP_OK) {
-        doc["id"] = nullptr;
+        httpd_resp_sendstr(req, "null");
+        return ESP_OK;
     } else {
-        doc["id"] = current_station;
+        httpd_resp_sendstr(req, current_station.c_str());
+        return ESP_OK;
     }
-    char buffer[64];
-    const auto bytesWritten = serializeJson(doc, buffer);
-    if (bytesWritten == 0) {
-        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to serialize JSON");
-        return ESP_FAIL;
-    }
-    httpd_resp_send(req, buffer, bytesWritten);
-    return ESP_OK;
 }
 
 static esp_err_t api_set_current_station_handler(httpd_req_t *req) {
-    char content[100];
+    char content[2048];
     size_t recv_size = std::min(req->content_len, sizeof(content));
     int ret = httpd_req_recv(req, content, recv_size);
     if (ret <= 0) { /* 0 return value indicates connection closed */
@@ -250,16 +244,8 @@ static esp_err_t api_set_current_station_handler(httpd_req_t *req) {
          * ensure that the underlying socket is closed */
         return ESP_FAIL;
     }
-    JsonDocument doc;
-    auto error = deserializeJson(doc, content);
-    if (error) {
-        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Invalid JSON");
-        return ESP_FAIL;
-    }
-
-    const std::string id = doc["id"];
     NVSEngine nvs_engine("depmon");
-    auto err = nvs_engine.setString("current_station", id);
+    auto err = nvs_engine.setString("current_station", std::string(content, recv_size));
     if (err != ESP_OK) {
         httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to set current station");
         return ESP_FAIL;
