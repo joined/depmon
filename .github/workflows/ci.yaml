@@ -3,7 +3,55 @@ name: CI
 on: [push]
 
 jobs:
+  cpp_format:
+    name: C++ Formatting Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run clang-format style check for C/C++/Protobuf programs.
+        uses: jidicula/clang-format-action@v4.11.0
+        with:
+          clang-format-version: "17"
+
+  frontend_eslint:
+    name: ESLint Frontend
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install node
+        uses: actions/setup-node@v3
+        with:
+          node-version: "16.16.0"
+          cache: "yarn"
+          cache-dependency-path: "frontend/yarn.lock"
+      - name: Install frontend dependencies, run ESLint
+        run: |
+          cd frontend
+          yarn install
+          yarn lint:frontend:eslint
+
+  frontend_typescript:
+    name: Typescript Frontend
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install node
+        uses: actions/setup-node@v3
+        with:
+          node-version: "16.16.0"
+          cache: "yarn"
+          cache-dependency-path: "frontend/yarn.lock"
+      - name: Install frontend dependencies, check typing
+        run: |
+          cd frontend
+          yarn install
+          yarn lint:frontend:ts
+
   build_esp:
+    name: Build ESP binaries
     timeout-minutes: 10
     runs-on: ubuntu-latest
 
@@ -35,6 +83,7 @@ jobs:
           /bin/bash -c 'git config --global --add safe.directory "*" && idf.py build'
 
   build_simulator:
+    name: Build simulator binary
     timeout-minutes: 10
     runs-on: ubuntu-latest
 

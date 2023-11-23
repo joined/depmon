@@ -3,4 +3,5 @@ BasedOnStyle: LLVM
 IndentWidth: 4
 ColumnLimit: 120
 UseTab: Never
+ReflowComments: false
 ...
