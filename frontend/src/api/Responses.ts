@@ -6,6 +6,7 @@ export interface SysInfoAppStateResponse {
 }
 
 export interface SysInfoSoftwareResponse {
+    app_version: string;
     idf_version: string;
     project_name: string;
     compile_time: string;

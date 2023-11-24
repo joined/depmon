@@ -55,6 +55,7 @@ const CHIP_MODEL_TO_NAME: { [key: number]: string } = {
 
 const KEY_TO_LABEL: { [key: string]: string } = {
     time: 'System time (UTC)',
+    app_version: 'App version',
     mdns_hostname: 'mDNS hostname',
     idf_version: 'IDF version',
     project_name: 'Project name',
@@ -102,7 +103,7 @@ const SoftwareTable = ({ data }: { data: SysInfoSoftwareResponse }) => (
         <Table>
             <TableBody>
                 {(
-                    ['idf_version', 'project_name', 'compile_time', 'compile_date'] satisfies Array<
+                    ['app_version', 'idf_version', 'project_name', 'compile_time', 'compile_date'] satisfies Array<
                         keyof SysInfoSoftwareResponse
                     >
                 ).map((key) => (
