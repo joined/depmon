@@ -28,6 +28,7 @@ import {
     SysInfoMemoryResponse,
     SysInfoHardwareResponse,
     SysInfoTaskResponse,
+    SysInfoAppStateResponse,
 } from 'src/api/Responses';
 import { getRequestSender } from 'src/util/Ajax';
 import { SYS_INFO_REFRESH_INTERVAL } from 'src/util/Constants';
@@ -41,6 +42,17 @@ const TASK_STATUS_TO_ICON: { [key: number]: React.ReactElement } = {
     5: <QuestionMarkIcon />, // Invalid
 };
 
+const CHIP_MODEL_TO_NAME: { [key: number]: string } = {
+    1: 'ESP32',
+    2: 'ESP32-S2',
+    5: 'ESP32-C3',
+    9: 'ESP32-S3',
+    12: 'ESP32-C2',
+    13: 'ESP32-C6',
+    16: 'ESP32-H2',
+    999: 'POSIX/Linux simulator',
+};
+
 const KEY_TO_LABEL: { [key: string]: string } = {
     time: 'System time (UTC)',
     mdns_hostname: 'mDNS hostname',
@@ -51,6 +63,7 @@ const KEY_TO_LABEL: { [key: string]: string } = {
     free_heap: 'Free heap',
     minimum_free_heap: 'Minimum free heap',
     mac_address: 'MAC address',
+    chip_model: 'Chip model',
 };
 
 const bottomMarginStyle = css`
@@ -63,7 +76,7 @@ const lastTableRowStyle = css`
     }
 `;
 
-const AppStateTable = (props: { data: SysInfoResponse['app_state'] }) => (
+const AppStateTable = ({ data }: { data: SysInfoAppStateResponse }) => (
     <TableContainer component={Paper} css={bottomMarginStyle}>
         <Table>
             <TableBody>
@@ -71,22 +84,20 @@ const AppStateTable = (props: { data: SysInfoResponse['app_state'] }) => (
                     <TableCell component="th" scope="row">
                         {KEY_TO_LABEL['time']}
                     </TableCell>
-                    <TableCell align="right">
-                        {props.data.time ? new Date(props.data.time).toISOString() : 'Not set'}
-                    </TableCell>
+                    <TableCell align="right">{data.time ? new Date(data.time).toISOString() : 'Not set'}</TableCell>
                 </TableRow>
                 <TableRow key={'mdns_hostname'} css={lastTableRowStyle}>
                     <TableCell component="th" scope="row">
                         {KEY_TO_LABEL['mdns_hostname']}
                     </TableCell>
-                    <TableCell align="right">{props.data.mdns_hostname.toLowerCase()}</TableCell>
+                    <TableCell align="right">{data.mdns_hostname.toLowerCase()}</TableCell>
                 </TableRow>
             </TableBody>
         </Table>
     </TableContainer>
 );
 
-const SoftwareTable = (props: { data: SysInfoResponse['software'] }) => (
+const SoftwareTable = ({ data }: { data: SysInfoSoftwareResponse }) => (
     <TableContainer component={Paper} css={bottomMarginStyle}>
         <Table>
             <TableBody>
@@ -99,7 +110,7 @@ const SoftwareTable = (props: { data: SysInfoResponse['software'] }) => (
                         <TableCell component="th" scope="row">
                             {KEY_TO_LABEL[key] || key}
                         </TableCell>
-                        <TableCell align="right">{props.data[key]}</TableCell>
+                        <TableCell align="right">{data[key]}</TableCell>
                     </TableRow>
                 ))}
             </TableBody>
@@ -107,7 +118,7 @@ const SoftwareTable = (props: { data: SysInfoResponse['software'] }) => (
     </TableContainer>
 );
 
-const MemoryTable = (props: { data: SysInfoResponse['memory'] }) => (
+const MemoryTable = ({ data }: { data: SysInfoMemoryResponse }) => (
     <TableContainer component={Paper} css={bottomMarginStyle}>
         <Table>
             <TableBody>
@@ -116,7 +127,7 @@ const MemoryTable = (props: { data: SysInfoResponse['memory'] }) => (
                         <TableCell component="th" scope="row">
                             {KEY_TO_LABEL[key] || key}
                         </TableCell>
-                        <TableCell align="right">{props.data[key]}</TableCell>
+                        <TableCell align="right">{data[key]}</TableCell>
                     </TableRow>
                 ))}
             </TableBody>
@@ -124,26 +135,29 @@ const MemoryTable = (props: { data: SysInfoResponse['memory'] }) => (
     </TableContainer>
 );
 
-const HardwareTable = (props: { data: SysInfoResponse['hardware'] }) => (
+const HardwareTable = ({ data }: { data: SysInfoHardwareResponse }) => (
     // TODO Maybe use small variant of the table when there's little space?
     <TableContainer component={Paper} css={bottomMarginStyle}>
         <Table>
             <TableBody>
-                {/* TODO Add ESP version */}
-                {(['mac_address'] satisfies Array<keyof SysInfoHardwareResponse>).map((key) => (
-                    <TableRow key={key} css={lastTableRowStyle}>
-                        <TableCell component="th" scope="row">
-                            {KEY_TO_LABEL[key] || key}
-                        </TableCell>
-                        <TableCell align="right">{props.data[key]}</TableCell>
-                    </TableRow>
-                ))}
+                <TableRow key={'chip_model'} css={lastTableRowStyle}>
+                    <TableCell component="th" scope="row">
+                        {KEY_TO_LABEL['chip_model']}
+                    </TableCell>
+                    <TableCell align="right">{CHIP_MODEL_TO_NAME[data.chip_model]}</TableCell>
+                </TableRow>
+                <TableRow key={'mac_address'} css={lastTableRowStyle}>
+                    <TableCell component="th" scope="row">
+                        {KEY_TO_LABEL['mac_address']}
+                    </TableCell>
+                    <TableCell align="right">{data.mac_address}</TableCell>
+                </TableRow>
             </TableBody>
         </Table>
     </TableContainer>
 );
 
-const TaskTable = (props: { data: NonNullable<SysInfoResponse['tasks']> }) => (
+const TaskTable = ({ data }: { data: Array<SysInfoTaskResponse> }) => (
     <TableContainer component={Paper} css={bottomMarginStyle}>
         <Table>
             <TableHead>
@@ -152,12 +166,12 @@ const TaskTable = (props: { data: NonNullable<SysInfoResponse['tasks']> }) => (
                     <TableCell align="right">Priority</TableCell>
                     <TableCell align="right">Stack high watermark</TableCell>
                     <TableCell align="right">State</TableCell>
-                    {props.data[0].runtime !== null ? <TableCell align="right">Runtime</TableCell> : null}
-                    {props.data[0].core_id !== null ? <TableCell align="right">Core ID</TableCell> : null}
+                    {data[0].runtime !== null ? <TableCell align="right">Runtime</TableCell> : null}
+                    {data[0].core_id !== null ? <TableCell align="right">Core ID</TableCell> : null}
                 </TableRow>
             </TableHead>
             <TableBody>
-                {props.data.map((task) => (
+                {data.map((task) => (
                     <TableRow key={`${task.name}-${task.core_id}`} css={lastTableRowStyle}>
                         <TableCell
                             css={css`

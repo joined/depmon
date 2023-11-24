@@ -14,6 +14,7 @@ export interface SysInfoSoftwareResponse {
 
 export interface SysInfoHardwareResponse {
     mac_address: string;
+    chip_model: number;
 }
 
 export interface SysInfoMemoryResponse {

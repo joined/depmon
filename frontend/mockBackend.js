@@ -25,6 +25,7 @@ app.get('/sysinfo', (req, res) => {
             },
             hardware: {
                 mac_address: '1A:2B:3C:4D:5E:6F',
+                chip_model: 1,
             },
             memory: {
                 free_heap: 123456,
