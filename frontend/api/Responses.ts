@@ -1,4 +1,4 @@
-import { LineProductType, ParsedStationLine } from "src/Types";
+import { LineProductType, ParsedStationLine } from "../Types";
 
 export interface SysInfoAppStateResponse {
     time: number | null;
