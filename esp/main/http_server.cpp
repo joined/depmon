@@ -141,7 +141,7 @@ static esp_err_t api_get_sysinfo_handler(httpd_req_t *req) {
     JsonDocument doc;
     auto software = doc["software"].to<JsonObject>();
     const esp_app_desc_t *app_description = esp_app_get_description();
-    software["version"] = app_description->version;
+    software["app_version"] = app_description->version;
     software["idf_version"] = app_description->idf_ver;
     software["project_name"] = app_description->project_name;
     software["compile_time"] = app_description->time;
