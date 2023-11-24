@@ -1,5 +1,6 @@
 #include <ArduinoJson.h>
 #include <esp_app_desc.h>
+#include <esp_chip_info.h>
 #include <esp_http_server.h>
 #include <esp_log.h>
 #include <esp_mac.h>
@@ -149,13 +150,14 @@ static esp_err_t api_get_sysinfo_handler(httpd_req_t *req) {
     auto app_state = doc["app_state"].to<JsonObject>();
     // TODO What if time is not configured?
     auto time = Time::epochMillis();
-    ESP_LOGI(TAG, "Time: %lu", time);
-    // TODO This time is wrong, why?
     app_state["time"] = time;
     app_state["mdns_hostname"] = getMDNSHostname() + ".local";
 
     auto hardware = doc["hardware"].to<JsonObject>();
     hardware["mac_address"] = getMacString(true);
+    esp_chip_info_t chip_info;
+    esp_chip_info(&chip_info);
+    hardware["chip_model"] = chip_info.model;
 
     auto memory = doc["memory"].to<JsonObject>();
     memory["free_heap"] = esp_get_free_heap_size();

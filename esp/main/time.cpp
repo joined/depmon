@@ -39,8 +39,10 @@ esp_err_t initSNTP() {
 
 const std::chrono::system_clock::time_point timePointNow() { return std::chrono::system_clock::now(); }
 
-unsigned long epochMillis() {
-    return (std::chrono::duration_cast<std::chrono::milliseconds>(timePointNow().time_since_epoch())).count();
+int64_t epochMillis() {
+    auto result = std::chrono::duration_cast<std::chrono::milliseconds>(timePointNow().time_since_epoch());
+    auto count = result.count();
+    return count;
 }
 
 std::string timeNowAscii() {
