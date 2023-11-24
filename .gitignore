@@ -1,0 +1,11 @@
+# Frontend
+node_modules/
+frontend_dist/
+.parcel-cache/
+.cache/
+
+# ESP
+build/
+managed_components/
+sdkconfig
+sdkconfig.old

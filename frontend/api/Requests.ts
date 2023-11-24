@@ -1,4 +1,4 @@
-import { ParsedStationLine } from "src/Types";
+import { ParsedStationLine } from "../Types";
 
 export interface LocationsQueryRequestQuerySchema {
     query: string;

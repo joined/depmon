@@ -29,9 +29,9 @@ import {
     SysInfoHardwareResponse,
     SysInfoTaskResponse,
     SysInfoAppStateResponse,
-} from 'src/api/Responses';
-import { getRequestSender } from 'src/util/Ajax';
-import { SYS_INFO_REFRESH_INTERVAL } from 'src/util/Constants';
+} from '../../api/Responses';
+import { getRequestSender } from '../../util/Ajax';
+import { SYS_INFO_REFRESH_INTERVAL } from '../../util/Constants';
 
 const TASK_STATUS_TO_ICON: { [key: number]: React.ReactElement } = {
     0: <DirectionsRunIcon />, // Running

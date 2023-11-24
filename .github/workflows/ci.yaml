@@ -25,10 +25,9 @@ jobs:
         with:
           node-version: "16.16.0"
           cache: "yarn"
-          cache-dependency-path: "frontend/yarn.lock"
+          cache-dependency-path: "yarn.lock"
       - name: Install frontend dependencies, run ESLint
         run: |
-          cd frontend
           yarn install
           yarn lint:frontend:eslint
 
@@ -43,10 +42,9 @@ jobs:
         with:
           node-version: "16.16.0"
           cache: "yarn"
-          cache-dependency-path: "frontend/yarn.lock"
+          cache-dependency-path: "yarn.lock"
       - name: Install frontend dependencies, check typing
         run: |
-          cd frontend
           yarn install
           yarn lint:frontend:ts
 
@@ -65,21 +63,20 @@ jobs:
         with:
           node-version: "16.16.0"
           cache: "yarn"
-          cache-dependency-path: "frontend/yarn.lock"
+          cache-dependency-path: "yarn.lock"
       - name: Install frontend dependencies and build frontend
         run: |
-          cd frontend
           yarn install
           yarn build
       - name: Cache esp-idf build
         uses: actions/cache@v3
         with:
-          path: "esp/build"
+          path: "build"
           key: ${{ runner.os }}-build-v2
       - name: esp-idf build
         run: |
           docker run -t -e IDF_TARGET="esp32" -e GITHUB_ACTIONS=true -v "${GITHUB_WORKSPACE}:/app/${{ github.repository }}" \
-          -w "/app/${{ github.repository }}/esp" espressif/idf:v5.1 \
+          -w "/app/${{ github.repository }}" espressif/idf:v5.1 \
           /bin/bash -c 'git config --global --add safe.directory "*" && idf.py build'
 
   build_simulator:

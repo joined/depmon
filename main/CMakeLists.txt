@@ -6,12 +6,12 @@ idf_component_register(
     PRIV_REQUIRES esp_app_format esp_http_client esp_http_server esp_timer esp_wifi json nvs_flash spiffs vfs wifi_provisioning lwip
 )
 
-set(FRONTEND_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../frontend")
+set(ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/..")
 
 if(DEFINED ENV{GITHUB_ACTIONS})
     message(STATUS "Running on GitHub Actions. Assuming that web UI is already built.")
 
-    spiffs_create_partition_image(www ${FRONTEND_DIR}/dist FLASH_IN_PROJECT)
+    spiffs_create_partition_image(www ${ROOT_DIR}/frontend_dist FLASH_IN_PROJECT)
 else()
     find_program(YARN_EXECUTABLE yarn)
     if(NOT YARN_EXECUTABLE)
@@ -22,7 +22,7 @@ else()
     ExternalProject_Add(
         build_frontend
         PREFIX ${CMAKE_BINARY_DIR}/build_frontend
-        SOURCE_DIR ${FRONTEND_DIR}
+        SOURCE_DIR ${ROOT_DIR}
         CONFIGURE_COMMAND ${YARN_EXECUTABLE}
         USES_TERMINAL_BUILD true
         BUILD_COMMAND ${YARN_EXECUTABLE} build
@@ -33,5 +33,5 @@ else()
         BUILD_IN_SOURCE TRUE
     )
 
-    spiffs_create_partition_image(www ${FRONTEND_DIR}/dist FLASH_IN_PROJECT DEPENDS build_frontend)
+    spiffs_create_partition_image(www ${ROOT_DIR}/frontend_dist FLASH_IN_PROJECT DEPENDS build_frontend)
 endif()

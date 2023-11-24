@@ -4,9 +4,8 @@
         "lint:frontend:eslint": "eslint .",
         "lint:frontend:ts": "tsc --noEmit",
         "prebuild": "rm -rf dist",
-        "start": "parcel src/index.html & nodemon mockBackend.js",
-        "start:no-backend": "parcel src/index.html",
-        "build": "parcel build src/index.html --no-source-maps && find dist/ -type f ! -name '*.gz' -delete && find dist/ -type f -name '*.map.gz' -delete && ls -lah dist/",
+        "start": "parcel & nodemon mockBackend.js",
+        "build": "parcel build --no-source-maps --dist-dir frontend_dist && find frontend_dist/ -type f ! -name '*.gz' -delete && find frontend_dist/ -type f -name '*.map.gz' -delete && ls -lah frontend_dist/",
         "test": "jest"
     },
     "dependencies": {
@@ -52,5 +51,6 @@
     "jest": {
         "preset": "ts-jest",
         "testEnvironment": "jsdom"
-    }
+    },
+    "source": "frontend/index.html"
 }

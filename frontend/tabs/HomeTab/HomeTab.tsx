@@ -26,10 +26,10 @@ import { useState, useEffect, HTMLAttributes, useMemo } from 'react';
 import { groupBy, uniqBy } from 'remeda';
 import useSWRImmutable from 'swr/immutable';
 import useSWRMutation from 'swr/mutation';
-import { CurrentStationPostRequestSchema, LocationsQueryRequestQuerySchema } from 'src/api/Requests';
-import { CurrentStationGetResponse, LocationsQueryGetResponse, LocationsQueryResponseItem } from 'src/api/Responses';
-import { LineProductType, ParsedStation, ParsedStationLine } from 'src/Types';
-import { getRequestSender, postRequestSender } from 'src/util/Ajax';
+import { CurrentStationPostRequestSchema, LocationsQueryRequestQuerySchema } from '../../api/Requests';
+import { CurrentStationGetResponse, LocationsQueryGetResponse, LocationsQueryResponseItem } from '../../api/Responses';
+import { LineProductType, ParsedStation, ParsedStationLine } from '../../Types';
+import { getRequestSender, postRequestSender } from '../../util/Ajax';
 
 const getLocationsQueryURL = (query: string) => {
     const url = new URL('https://v6.bvg.transport.rest/locations');
