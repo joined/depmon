@@ -209,6 +209,7 @@ export default function StationChangeDialog({
                     value={selectedOption}
                     onChange={(event, newStation) => {
                         // TODO Do not select if the locations search happened just now (~100ms?), to prevent misclicks
+                        // which happen easily due to debounce
                         setOptions(newStation ? [newStation, ...options] : options);
                         setSelectedOption(newStation);
                     }}
