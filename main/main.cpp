@@ -99,7 +99,7 @@ static void provisioning_event_handler(void *arg, esp_event_base_t event_base, i
 
 static void init_mdns_and_netbios(void) {
     // TODO Handle collision problem better, idea: do a query before setting the hostname and check if someone else
-    // on the network is already using it. If so, append a number to the hostname.
+    // on the network is already using the default hostname (`depmon.local`). If so, append a number to the hostname.
     const auto uniqueTag = getMDNSHostname();
     // TODO We should display this tag somewhere, otherwise how do we know how to connect to the device?
     ESP_LOGI(TAG, "Unique tag: %s", uniqueTag.c_str());

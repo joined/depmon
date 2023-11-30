@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
+# TODO Set `PROJECT_VER`
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 
 # "Trim" the build. Include the minimal set of components, main and anything it depends on.
@@ -9,6 +10,7 @@ set(COMPONENTS main)
 idf_build_set_property(COMPILE_OPTIONS "-Wno-missing-field-initializers" APPEND)
 
 # TODO Fix deprecated enum conversion warning
+# Seems like it's fixed on `master`, but not in the latest release (v8.3)
 
 # TODO The following should be handled via menuconfig, but they're missing in the KConfig
 idf_build_set_property(COMPILE_OPTIONS "-DLV_ATTRIBUTE_TIMER_HANDLER=IRAM_ATTR" APPEND)

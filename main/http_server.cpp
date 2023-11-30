@@ -162,7 +162,7 @@ static esp_err_t api_get_sysinfo_handler(httpd_req_t *req) {
     auto memory = doc["memory"].to<JsonObject>();
     memory["free_heap"] = esp_get_free_heap_size();
     memory["minimum_free_heap"] = esp_get_minimum_free_heap_size();
-    // TODO The followin line seems to be causing panics. Investigate.
+    // TODO The following line seems to be causing panics. Investigate.
     // memory["largest_free_heap_block"] = heap_caps_get_largest_free_block(MALLOC_CAP_DEFAULT);
 
     // TODO Add total runtime?

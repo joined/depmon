@@ -1,5 +1,4 @@
 {
-    // TODO Add ESLint to CI
     "root": true,
     "extends": [
         "eslint:recommended",
