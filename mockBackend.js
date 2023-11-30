@@ -3,6 +3,8 @@ const app = express();
 const port = 3000;
 
 let currentStation = null;
+const ENABLE_FAILURES = true;
+const FAILURE_RATE = 0.2;
 
 app.use(express.json());
 
@@ -17,7 +19,7 @@ app.get('/sysinfo', (req, res) => {
                 mdns_hostname: 'depmon-fake.local',
             },
             software: {
-                version: 'Mock version',
+                app_version: 'Mock app version',
                 idf_version: 'Mock IDF version',
                 project_name: 'Mock project name',
                 compile_time: 'Mock compile time',
@@ -48,18 +50,19 @@ app.get('/sysinfo', (req, res) => {
 });
 
 app.get('/currentstation', (req, res) => {
-    res.send(
-        JSON.stringify(currentStation)
-    );
+    if (ENABLE_FAILURES && Math.random() < FAILURE_RATE) {
+        res.status(500).send();
+    } else {
+        res.send(JSON.stringify(currentStation));
+    }
 });
 
 app.post('/currentstation', (req, res) => {
-    // Fail 20% of the time
-    if (Math.random() < 0.8) {
+    if (ENABLE_FAILURES && Math.random() < FAILURE_RATE) {
+        res.status(500).send();
+    } else {
         currentStation = req.body;
         res.send();
-    } else {
-        res.status(500).send();
     }
 });
 

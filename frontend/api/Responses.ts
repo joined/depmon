@@ -1,4 +1,4 @@
-import { LineProductType, ParsedStationLine } from "../Types";
+import { LineProductType, ParsedStation } from '../Types';
 
 export interface SysInfoAppStateResponse {
     time: number | null;
@@ -40,22 +40,4 @@ export interface SysInfoResponse {
     tasks: Array<SysInfoTaskResponse> | null;
 }
 
-export type LocationsQueryLineResponse = {
-    id: string;
-    name: string;
-    product: LineProductType;
-};
-
-export interface LocationsQueryResponseItem {
-    id: string;
-    name: string;
-    lines: Array<LocationsQueryLineResponse>;
-}
-
-export type LocationsQueryGetResponse = Array<LocationsQueryResponseItem>;
-
-export interface CurrentStationGetResponse {
-    id: string;
-    name: string;
-    lines: Array<ParsedStationLine>;
-}
+export type CurrentStationGetResponse = (ParsedStation & { enabledProducts: Array<LineProductType> }) | null;

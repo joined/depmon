@@ -80,8 +80,10 @@ esp_err_t BvgApiClient::http_event_handler(esp_http_client_event_t *evt) {
 }
 
 void BvgApiClient::setUrl(const std::string &stationId) {
-    std::string url =
-        "https://v6.bvg.transport.rest/stops/" + stationId + "/departures?results=" + std::to_string(N_RESULTS);
+    // TODO store and read number of results from NVS. keep int mind that memory is limited.
+    // TODO read enabled products from NVS and set corresponding query params
+    std::string url = "https://v6.bvg.transport.rest/stops/" + stationId +
+                      "/departures?results=" + std::to_string(N_RESULTS) + "&pretty=false&duration=60&results=10";
     esp_http_client_set_url(client, url.c_str());
 }
 

@@ -7,6 +7,9 @@ static const char *TAG = "NVS";
 // TODO Have a version number for the NVS namespace so that we can migrate data
 // On opening the NVS, we should check the version number and erase the NVS if
 // it's not the current version
+// Alternatively, use a different NVS partition to store the data, which can be erased
+// via `esptool.py erase-region`, see https://docs.espressif.com/projects/esptool/en/latest/esp32s3/esptool/basic-commands.html#erase-flash-erase-flash-erase-region
+// without erasing the WiFi config stored in the default NVS partition
 
 NVSEngine::NVSEngine(const std::string nspace, nvs_open_mode mode) { nvs_open(nspace.c_str(), mode, &this->handle); };
 

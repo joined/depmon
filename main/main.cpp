@@ -253,6 +253,8 @@ extern "C" void app_main(void) {
 
     std::this_thread::sleep_for(2s);
 
+    // TODO This fails after initial provisioning and causes a reboot, figure out why
+    // "error in listen.."
     setup_http_server();
 
     // TODO We should avoid starting the timer before we have a valid time from NTP

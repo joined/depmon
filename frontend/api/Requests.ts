@@ -1,4 +1,4 @@
-import { ParsedStationLine } from "../Types";
+import { LineProductType, ParsedStation } from '../Types';
 
 export interface LocationsQueryRequestQuerySchema {
     query: string;
@@ -12,8 +12,6 @@ export interface LocationsQueryRequestQuerySchema {
     [key: string]: any;
 }
 
-export interface CurrentStationPostRequestSchema{
-    id: string;
-    name: string;
-    lines: Array<ParsedStationLine>;
+export interface CurrentStationPostRequestSchema extends ParsedStation {
+    enabledProducts: Array<LineProductType>;
 }
