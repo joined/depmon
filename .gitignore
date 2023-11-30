@@ -3,6 +3,8 @@ node_modules/
 frontend_dist/
 .parcel-cache/
 .cache/
+# `parcel serve` doesn't respect the `distDir` option :( https://github.com/parcel-bundler/parcel/issues/9096
+dist/
 
 # ESP
 build/
