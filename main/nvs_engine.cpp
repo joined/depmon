@@ -47,6 +47,7 @@ esp_err_t NVSEngine::readCurrentStation(JsonDocument *doc) {
 
     JsonDocument currentStationIdFilter;
     currentStationIdFilter["id"] = true;
+    currentStationIdFilter["enabledProducts"] = true;
 
     auto deserializationError =
         deserializeJson(*doc, currentStation, DeserializationOption::Filter(currentStationIdFilter));

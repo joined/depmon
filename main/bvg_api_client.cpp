@@ -1,8 +1,8 @@
-#include <ArduinoJson.h>
 #include <chrono>
 #include <ctime>
 #include <esp_http_client.h>
 #include <esp_log.h>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -11,6 +11,8 @@
 #include "time.hpp"
 
 static const char *TAG = "BvgApiClient";
+
+const std::vector<std::string> ALL_PRODUCTS = {"suburban", "subway", "tram", "bus", "ferry", "express", "regional"};
 
 BvgApiClient::BvgApiClient(const std::string &stationId) {
     esp_http_client_config_t config = {
@@ -79,12 +81,35 @@ esp_err_t BvgApiClient::http_event_handler(esp_http_client_event_t *evt) {
     return ESP_OK;
 }
 
-void BvgApiClient::setUrl(const std::string &stationId) {
-    // TODO store and read number of results from NVS. keep int mind that memory is limited.
-    // TODO read enabled products from NVS and set corresponding query params
-    std::string url = "https://v6.bvg.transport.rest/stops/" + stationId +
-                      "/departures?results=" + std::to_string(N_RESULTS) + "&pretty=false&duration=60&results=10";
-    esp_http_client_set_url(client, url.c_str());
+void BvgApiClient::setUrl(const std::string &stationId, const JsonArray &enabledProducts) {
+    // TODO store and read number of results from NVS. keep in mind that memory is limited.
+    std::map<std::string, std::string> queryParams = {
+        {"results", std::to_string(N_RESULTS)},
+        {"pretty", "false"},
+        // TODO Extract to constant
+        {"duration", std::to_string(60)},
+    };
+    for (const auto &product : ALL_PRODUCTS) {
+        queryParams[product] = "false";
+    }
+    for (const auto &product : enabledProducts) {
+        queryParams[product.as<std::string>()] = "true";
+    }
+
+    std::ostringstream url;
+
+    url << "https://v6.bvg.transport.rest/stops/" << stationId << "/departures?";
+
+    for (auto entry = queryParams.begin(); entry != queryParams.end(); ++entry) {
+        if (entry != queryParams.begin()) {
+            url << "&";
+        }
+
+        // TODO URLEncode / escape? We don't really need it
+        url << entry->first << "=" << entry->second;
+    }
+
+    esp_http_client_set_url(client, url.str().c_str());
 }
 
 std::vector<Trip> BvgApiClient::fetchAndParseTrips() {
@@ -95,7 +120,7 @@ std::vector<Trip> BvgApiClient::fetchAndParseTrips() {
     if (err) {
         return {};
     }
-    this->setUrl(currentStationDoc["id"]);
+    this->setUrl(currentStationDoc["id"], currentStationDoc["enabledProducts"].as<JsonArray>());
     err = esp_http_client_perform(client);
 
     if (err != ESP_OK) {
