@@ -1,6 +1,6 @@
-import { css } from "@emotion/react";
-import { useMemo } from "react";
-import { LineProductType } from "frontend/Types";
+import { css } from '@emotion/react';
+import { useMemo } from 'react';
+import { LineProductType } from 'frontend/Types';
 
 interface LineIconProps {
     name: string;

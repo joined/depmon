@@ -3,106 +3,123 @@ name: CI
 on: [push]
 
 jobs:
-  cpp_format:
-    name: C++ Formatting Check
-    runs-on: ubuntu-latest
+    prettier:
+        name: Prettier check
+        runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v4
-      - name: Run clang-format style check for C/C++/Protobuf programs.
-        uses: jidicula/clang-format-action@v4.11.0
-        with:
-          clang-format-version: "17"
+        steps:
+            - uses: actions/checkout@v4
+            - name: Install node
+              uses: actions/setup-node@v3
+              with:
+                  node-version: '16.16.0'
+                  cache: 'yarn'
+                  cache-dependency-path: 'yarn.lock'
+            - name: Install frontend dependencies, check Prettier formatting
+              run: |
+                  yarn install
+                  yarn lint:prettier
 
-  frontend_eslint:
-    name: ESLint Frontend
-    runs-on: ubuntu-latest
+    cpp_format:
+        name: C++ Formatting Check
+        runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install node
-        uses: actions/setup-node@v3
-        with:
-          node-version: "16.16.0"
-          cache: "yarn"
-          cache-dependency-path: "yarn.lock"
-      - name: Install frontend dependencies, run ESLint
-        run: |
-          yarn install
-          yarn lint:frontend:eslint
+        steps:
+            - uses: actions/checkout@v4
+            - name: Run clang-format style check for C/C++/Protobuf programs.
+              uses: jidicula/clang-format-action@v4.11.0
+              with:
+                  clang-format-version: '17'
 
-  frontend_typescript:
-    name: Typescript Frontend
-    runs-on: ubuntu-latest
+    frontend_eslint:
+        name: ESLint Frontend
+        runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install node
-        uses: actions/setup-node@v3
-        with:
-          node-version: "16.16.0"
-          cache: "yarn"
-          cache-dependency-path: "yarn.lock"
-      - name: Install frontend dependencies, check typing
-        run: |
-          yarn install
-          yarn lint:frontend:ts
+        steps:
+            - uses: actions/checkout@v4
+            - name: Install node
+              uses: actions/setup-node@v3
+              with:
+                  node-version: '16.16.0'
+                  cache: 'yarn'
+                  cache-dependency-path: 'yarn.lock'
+            - name: Install frontend dependencies, run ESLint
+              run: |
+                  yarn install
+                  yarn lint:frontend:eslint
 
-  build_esp:
-    name: Build ESP binaries
-    timeout-minutes: 10
-    runs-on: ubuntu-latest
+    frontend_typescript:
+        name: Typescript Frontend
+        runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-        with:
-          submodules: "recursive"
-      - name: Install node
-        uses: actions/setup-node@v3
-        with:
-          node-version: "16.16.0"
-          cache: "yarn"
-          cache-dependency-path: "yarn.lock"
-      - name: Install frontend dependencies and build frontend
-        run: |
-          yarn install
-          yarn build
-      - name: Cache esp-idf build
-        uses: actions/cache@v3
-        with:
-          path: "build"
-          key: ${{ runner.os }}-build-v2
-      - name: esp-idf build
-        run: |
-          docker run -t -e IDF_TARGET="esp32" -e GITHUB_ACTIONS=true -v "${GITHUB_WORKSPACE}:/app/${{ github.repository }}" \
-          -w "/app/${{ github.repository }}" espressif/idf:v5.1 \
-          /bin/bash -c 'git config --global --add safe.directory "*" && idf.py build'
+        steps:
+            - uses: actions/checkout@v4
+            - name: Install node
+              uses: actions/setup-node@v3
+              with:
+                  node-version: '16.16.0'
+                  cache: 'yarn'
+                  cache-dependency-path: 'yarn.lock'
+            - name: Install frontend dependencies, check typing
+              run: |
+                  yarn install
+                  yarn lint:frontend:ts
 
-  build_simulator:
-    name: Build simulator binary
-    timeout-minutes: 10
-    runs-on: ubuntu-latest
+    build_esp:
+        name: Build ESP binaries
+        timeout-minutes: 10
+        runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cache/pip
-            ~/.platformio/.cache
-          key: ${{ runner.os }}-pio
-      - uses: actions/setup-python@v4
-        with:
-          python-version: "3.12"
-      - name: Install SDL2
-        run: |
-          sudo add-apt-repository -y "deb http://archive.ubuntu.com/ubuntu `lsb_release -sc` main universe restricted multiverse"
-          sudo apt-get update -y -qq
-          sudo apt-get install libsdl2-dev
-      - name: Install PlatformIO Core
-        run: pip install --upgrade platformio
-      - name: Build PlatformIO Project
-        run: |
-          cd simulator
-          pio run --verbose --environment emulator
+        steps:
+            - name: Checkout repo
+              uses: actions/checkout@v4
+              with:
+                  submodules: 'recursive'
+            - name: Install node
+              uses: actions/setup-node@v3
+              with:
+                  node-version: '16.16.0'
+                  cache: 'yarn'
+                  cache-dependency-path: 'yarn.lock'
+            - name: Install frontend dependencies and build frontend
+              run: |
+                  yarn install
+                  yarn build
+            - name: Cache esp-idf build
+              uses: actions/cache@v3
+              with:
+                  path: 'build'
+                  key: ${{ runner.os }}-build-v2
+            - name: esp-idf build
+              run: |
+                  docker run -t -e IDF_TARGET="esp32" -e GITHUB_ACTIONS=true -v "${GITHUB_WORKSPACE}:/app/${{ github.repository }}" \
+                  -w "/app/${{ github.repository }}" espressif/idf:v5.1 \
+                  /bin/bash -c 'git config --global --add safe.directory "*" && idf.py build'
+
+    build_simulator:
+        name: Build simulator binary
+        timeout-minutes: 10
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v3
+            - uses: actions/cache@v3
+              with:
+                  path: |
+                      ~/.cache/pip
+                      ~/.platformio/.cache
+                  key: ${{ runner.os }}-pio
+            - uses: actions/setup-python@v4
+              with:
+                  python-version: '3.12'
+            - name: Install SDL2
+              run: |
+                  sudo add-apt-repository -y "deb http://archive.ubuntu.com/ubuntu `lsb_release -sc` main universe restricted multiverse"
+                  sudo apt-get update -y -qq
+                  sudo apt-get install libsdl2-dev
+            - name: Install PlatformIO Core
+              run: pip install --upgrade platformio
+            - name: Build PlatformIO Project
+              run: |
+                  cd simulator
+                  pio run --verbose --environment emulator

@@ -1,15 +1,15 @@
 {
-  "compilerOptions": {
-    "baseUrl": ".",
-    "esModuleInterop": true,
-    "jsx": "react-jsx",
-    "jsxImportSource": "@emotion/react",
-    "lib": ["dom", "esnext"],
-    "module": "esnext",
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "strict": true,
-    "target": "es5",
-  },
-  "include": ["frontend/**/*"]
+    "compilerOptions": {
+        "baseUrl": ".",
+        "esModuleInterop": true,
+        "jsx": "react-jsx",
+        "jsxImportSource": "@emotion/react",
+        "lib": ["dom", "esnext"],
+        "module": "esnext",
+        "moduleResolution": "node",
+        "resolveJsonModule": true,
+        "strict": true,
+        "target": "es5"
+    },
+    "include": ["frontend/**/*"]
 }

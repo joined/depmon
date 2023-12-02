@@ -20,9 +20,9 @@ The `frontend` folder contains the source of the frontend for the configuration 
 
 Useful commands:
 
-- `yarn`: installs the dependencies
-- `yarn start`: starts a dev server with hot reloading and the mock backend API server
-- `yarn build`: builds the gzipped production version of the app, to be stored in the data partition of the ESP
+-   `yarn`: installs the dependencies
+-   `yarn start`: starts a dev server with hot reloading and the mock backend API server
+-   `yarn build`: builds the gzipped production version of the app, to be stored in the data partition of the ESP
 
 ### VSCode C++ Extension
 
