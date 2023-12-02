@@ -4,7 +4,8 @@ include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 
 # "Trim" the build. Include the minimal set of components, main and anything it depends on.
 # This requires us to list all the components required by main in its CMakeLists.txt, via `REQUIRES`.
-set(COMPONENTS main)
+set(COMPONENTS esp)
+set(EXTRA_COMPONENT_DIRS esp)
 
 # For the LCD/Touch initializers in `lcd.h`
 idf_build_set_property(COMPILE_OPTIONS "-Wno-missing-field-initializers" APPEND)
