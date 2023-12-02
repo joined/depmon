@@ -1,0 +1,36 @@
+# TODO Explain how to install this (within IDF venv) and the dependencies needed
+default_stages: [commit]
+repos:
+    - repo: https://github.com/pre-commit/pre-commit-hooks
+      rev: v4.5.0
+      hooks:
+          - id: check-added-large-files
+            name: Check for large added files
+
+    - repo: local
+      hooks:
+          - id: check-frontend-dependencies-versions
+            name: Check versions of frontend dependencies
+            language: system
+            pass_filenames: false
+            always_run: true
+            entry: npx check-dependencies
+
+          - id: prettier-format
+            name: Prettier formatting
+            language: system
+            pass_filenames: false
+            always_run: true
+            entry: npx prettier --write .
+
+          - id: clang-format
+            name: C++ Formatting
+            language: system
+            files: ^(esp|simulator)/.*\.(c|cpp|h|hpp)$
+            entry: clang-format -i
+
+          - id: frontend-eslint
+            name: ESLint frontend
+            language: system
+            files: ^frontend/.*\.tsx?$
+            entry: npx eslint --fix
