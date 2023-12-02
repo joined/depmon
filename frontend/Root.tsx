@@ -82,7 +82,9 @@ export const Root = () => {
                         <IconButton
                             color="inherit"
                             edge="start"
-                            onClick={() => setMobileOpen(true)}
+                            onClick={() => {
+                                setMobileOpen(true);
+                            }}
                             sx={{ mr: 2, display: { sm: 'none' } }}>
                             <MenuIcon />
                         </IconButton>

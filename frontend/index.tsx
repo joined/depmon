@@ -22,7 +22,13 @@ const router = createBrowserRouter([
     },
 ]);
 
-const root = createRoot(document.getElementById('root')!);
+const rootNode = document.getElementById('root');
+
+if (!rootNode) {
+    throw new Error('Could not find root node to inject React into.');
+}
+
+const root = createRoot(rootNode);
 root.render(
     <React.StrictMode>
         <RouterProvider router={router} />

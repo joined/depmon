@@ -9,7 +9,7 @@ export interface LocationsQueryRequestQuerySchema {
     poi: boolean; // show POIs? default: true
     linesOfStops?: boolean; // parse & return lines of stops? default: false
     language: 'en';
-    [key: string]: any;
+    [key: string]: string | boolean | number | undefined;
 }
 
 export interface CurrentStationPostRequestSchema extends ParsedStation {

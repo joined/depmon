@@ -2,6 +2,7 @@
     "compilerOptions": {
         "baseUrl": ".",
         "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
         "jsx": "react-jsx",
         "jsxImportSource": "@emotion/react",
         "lib": ["dom", "esnext"],
@@ -9,6 +10,7 @@
         "moduleResolution": "node",
         "resolveJsonModule": true,
         "strict": true,
+        "strictNullChecks": true,
         "target": "es5"
     },
     "include": ["frontend/**/*"]
