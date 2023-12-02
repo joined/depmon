@@ -4,7 +4,7 @@
         "lint:frontend:eslint": "eslint .",
         "lint:frontend:ts": "tsc --noEmit",
         "lint:prettier": "prettier --check .",
-        "prebuild": "rm -rf dist",
+        "prebuild": "rm -rf frontend_dist",
         "start": "parcel & nodemon mockBackend.js",
         "build": "parcel build --no-source-maps && find frontend_dist/ -type f ! -name '*.gz' -delete && find frontend_dist/ -type f -name '*.map.gz' -delete && ls -lah frontend_dist/",
         "test": "jest"
