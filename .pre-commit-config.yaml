@@ -6,6 +6,8 @@ repos:
       hooks:
           - id: check-added-large-files
             name: Check for large added files
+          - id: end-of-file-fixer
+            name: Ensure correct end of file
 
     - repo: local
       hooks:
