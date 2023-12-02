@@ -1,0 +1,4 @@
+.clang-format
+
+# Managed by `idf.py`
+main/idf_component.yml
