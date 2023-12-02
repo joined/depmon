@@ -32,11 +32,11 @@ export interface StationChangeDialogProps {
     onClose: () => void;
 }
 
-type LocationsQueryLineResponse = {
+interface LocationsQueryLineResponse {
     id: string;
     name: string;
     product: LineProductType;
-};
+}
 
 interface LocationsQueryResponseItem {
     id: string;
@@ -61,7 +61,10 @@ const getLocationsQueryURL = (query: string) => {
     };
 
     Object.keys(queryParams).forEach((key) => {
-        url.searchParams.append(key, queryParams[key].toString());
+        const value = queryParams[key];
+        if (value !== undefined) {
+            url.searchParams.append(key, value.toString());
+        }
     });
 
     return url.href;
@@ -77,10 +80,10 @@ const parseStationItem = ({ id, name, lines }: LocationsQueryResponseItem): Pars
         R.map((line) => ({
             name: line.name,
             // Regional trains are sometimes reported as buses
-            product: line.id?.startsWith('r') ? 'regional' : line.product,
+            product: line.id.startsWith('r') ? 'regional' : line.product,
         })),
         R.groupBy.strict((line) => line.product),
-        R.mapValues((lines) => R.map(lines!, (line) => line.name))
+        R.mapValues((lines) => (lines ? R.map(lines, (line) => line.name) : []))
     );
 
     return {
@@ -101,17 +104,22 @@ export default function StationChangeDialog({
     const [selectedOption, setSelectedOption] = useState<ParsedStation | null>(null);
     const [inputValue, setInputValue] = useState('');
 
-    const searchLocations = (query: string, callback: (response: Array<ParsedStation>) => void) => {
-        axios.get<LocationsQueryGetResponse>(getLocationsQueryURL(query)).then((response) => {
-            callback(response.data.map(parseStationItem) ?? []);
-        });
+    const searchLocations = (query: string) => {
+        axios
+            .get<LocationsQueryGetResponse>(getLocationsQueryURL(query))
+            .then((response) => {
+                setOptions(response.data.map(parseStationItem));
+            })
+            .catch((error) => {
+                console.log('Error fetching locations', error);
+            });
     };
 
     const searchLocationsDebounced = useMemo(() => debounce(searchLocations, 600), []);
 
     useEffect(() => {
         if (inputValue) {
-            searchLocationsDebounced(inputValue, setOptions);
+            searchLocationsDebounced(inputValue);
         }
     }, [searchLocationsDebounced, inputValue, selectedOption]);
 
@@ -186,10 +194,14 @@ export default function StationChangeDialog({
                 onSubmit={(event) => {
                     event.preventDefault();
                     const newCurrentStation = {
+                        /* eslint-disable @typescript-eslint/no-non-null-assertion -- Submission is disabled if the selected option is null */
                         ...selectedOption!,
                         enabledProducts: Object.keys(selectedOption!.linesByProduct) as Array<LineProductType>,
+                        /* eslint-enable @typescript-eslint/no-non-null-assertion */
                     };
-                    saveNewCurrentStation(newCurrentStation, () => setSelectedOption(null));
+                    saveNewCurrentStation(newCurrentStation, () => {
+                        setSelectedOption(null);
+                    });
                 }}
                 direction={{ xs: 'column', sm: 'row' }}
                 padding={2}

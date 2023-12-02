@@ -20,6 +20,7 @@ import {
     TableHead,
     Box,
 } from '@mui/material';
+import { AxiosError } from 'axios';
 import React, { useState } from 'react';
 import useSWRImmutable from 'swr/immutable';
 import {
@@ -33,7 +34,7 @@ import {
 import { getRequestSender } from '../../util/Ajax';
 import { SYS_INFO_REFRESH_INTERVAL } from '../../util/Constants';
 
-const TASK_STATUS_TO_ICON: { [key: number]: React.ReactElement } = {
+const TASK_STATUS_TO_ICON: Record<number, React.ReactElement> = {
     0: <DirectionsRunIcon />, // Running
     1: <AlarmOnIcon />, // Ready
     2: <BlockIcon />, // Blocked
@@ -42,7 +43,7 @@ const TASK_STATUS_TO_ICON: { [key: number]: React.ReactElement } = {
     5: <QuestionMarkIcon />, // Invalid
 };
 
-const CHIP_MODEL_TO_NAME: { [key: number]: string } = {
+const CHIP_MODEL_TO_NAME: Record<number, string> = {
     1: 'ESP32',
     2: 'ESP32-S2',
     5: 'ESP32-C3',
@@ -53,7 +54,7 @@ const CHIP_MODEL_TO_NAME: { [key: number]: string } = {
     999: 'POSIX/Linux simulator',
 };
 
-const KEY_TO_LABEL: { [key: string]: string } = {
+const KEY_TO_LABEL: Record<string, string> = {
     time: 'System time (UTC)',
     app_version: 'App version',
     mdns_hostname: 'mDNS hostname',
@@ -83,13 +84,13 @@ const AppStateTable = ({ data }: { data: SysInfoAppStateResponse }) => (
             <TableBody>
                 <TableRow key={'time'} css={lastTableRowStyle}>
                     <TableCell component="th" scope="row">
-                        {KEY_TO_LABEL['time']}
+                        {KEY_TO_LABEL.time}
                     </TableCell>
                     <TableCell align="right">{data.time ? new Date(data.time).toISOString() : 'Not set'}</TableCell>
                 </TableRow>
                 <TableRow key={'mdns_hostname'} css={lastTableRowStyle}>
                     <TableCell component="th" scope="row">
-                        {KEY_TO_LABEL['mdns_hostname']}
+                        {KEY_TO_LABEL.mdns_hostname}
                     </TableCell>
                     <TableCell align="right">{data.mdns_hostname.toLowerCase()}</TableCell>
                 </TableRow>
@@ -143,13 +144,13 @@ const HardwareTable = ({ data }: { data: SysInfoHardwareResponse }) => (
             <TableBody>
                 <TableRow key={'chip_model'} css={lastTableRowStyle}>
                     <TableCell component="th" scope="row">
-                        {KEY_TO_LABEL['chip_model']}
+                        {KEY_TO_LABEL.chip_model}
                     </TableCell>
                     <TableCell align="right">{CHIP_MODEL_TO_NAME[data.chip_model]}</TableCell>
                 </TableRow>
                 <TableRow key={'mac_address'} css={lastTableRowStyle}>
                     <TableCell component="th" scope="row">
-                        {KEY_TO_LABEL['mac_address']}
+                        {KEY_TO_LABEL.mac_address}
                     </TableCell>
                     <TableCell align="right">{data.mac_address}</TableCell>
                 </TableRow>
@@ -199,11 +200,11 @@ const TaskTable = ({ data }: { data: Array<SysInfoTaskResponse> }) => (
 
 export const SystemInformationTab = () => {
     const [isAutoRefreshEnabled, setAutoRefreshEnabled] = useState(false);
-    const { data, error, isLoading } = useSWRImmutable<SysInfoResponse>('/api/sysinfo', getRequestSender, {
+    const { data, error, isLoading } = useSWRImmutable<SysInfoResponse, AxiosError>('/api/sysinfo', getRequestSender, {
         refreshInterval: isAutoRefreshEnabled ? SYS_INFO_REFRESH_INTERVAL : 0,
     });
 
-    if (isLoading) {
+    if (isLoading || !data) {
         return <CircularProgress color="secondary" />;
     }
 
@@ -235,20 +236,20 @@ export const SystemInformationTab = () => {
             <Typography variant="h4" gutterBottom>
                 App state
             </Typography>
-            <AppStateTable data={data!.app_state} />
+            <AppStateTable data={data.app_state} />
             <Typography variant="h4" gutterBottom>
                 Software
             </Typography>
-            <SoftwareTable data={data!.software} />
+            <SoftwareTable data={data.software} />
             <Typography variant="h4" gutterBottom>
                 Memory
             </Typography>
-            <MemoryTable data={data!.memory} />
+            <MemoryTable data={data.memory} />
             <Typography variant="h4" gutterBottom>
                 Hardware
             </Typography>
-            <HardwareTable data={data!.hardware} />
-            {data!.tasks ? (
+            <HardwareTable data={data.hardware} />
+            {data.tasks ? (
                 <>
                     <Typography variant="h4" gutterBottom>
                         FreeRTOS Tasks
@@ -258,7 +259,7 @@ export const SystemInformationTab = () => {
                         css={css`
                             max-width: calc(100vw - 64px);
                         `}>
-                        <TaskTable data={data!.tasks} />
+                        <TaskTable data={data.tasks} />
                     </div>
                 </>
             ) : (

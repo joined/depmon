@@ -1,4 +1,5 @@
 import { CircularProgress, Typography, Stack, Button, Snackbar, Alert, Box } from '@mui/material';
+import { AxiosError } from 'axios';
 import { useState } from 'react';
 
 import useSWR from 'swr';
@@ -29,19 +30,19 @@ function InitialConfiguration({ onButtonClick, disabled }: InitialConfigurationP
 }
 
 export function HomeTab() {
-    const [isStationChangeDialogOpen, setStationChangeDialogOpen] = useState(false);
     const {
         data: currentStationResponse,
         error,
         isLoading,
         isValidating,
-    } = useSWR<CurrentStationGetResponse>('/api/currentstation', getRequestSender);
+    } = useSWR<CurrentStationGetResponse, AxiosError>('/api/currentstation', getRequestSender);
     const { trigger, isMutating } = useSWRMutation(
         '/api/currentstation',
         postRequestSender<CurrentStationPostRequestSchema>,
         { revalidate: false }
     );
 
+    const [isStationChangeDialogOpen, setStationChangeDialogOpen] = useState(false);
     const { state: snackbarState, openWithMessage: openSnackbarWithMessage, close: closeSnackbar } = useSnackbarState();
 
     if (isLoading) {
@@ -58,7 +59,12 @@ export function HomeTab() {
                 Departures panel configuration
             </Typography>
             {!currentStationResponse ? (
-                <InitialConfiguration disabled={isValidating} onButtonClick={() => setStationChangeDialogOpen(true)} />
+                <InitialConfiguration
+                    disabled={isValidating}
+                    onButtonClick={() => {
+                        setStationChangeDialogOpen(true);
+                    }}
+                />
             ) : (
                 <Box>
                     <Stack
@@ -77,14 +83,16 @@ export function HomeTab() {
                             disabled={isValidating || isMutating}
                             sx={{ width: { xs: 100, sm: 'auto' } }}
                             variant="contained"
-                            onClick={() => setStationChangeDialogOpen(true)}>
+                            onClick={() => {
+                                setStationChangeDialogOpen(true);
+                            }}>
                             Change
                         </Button>
                     </Stack>
                     <ServicesSection
                         currentStation={currentStationResponse}
                         saveNewCurrentStation={(newCurrentStation) => {
-                            trigger(newCurrentStation, {
+                            void trigger(newCurrentStation, {
                                 onSuccess: () => {
                                     openSnackbarWithMessage('Saved', 'success');
                                 },
@@ -102,7 +110,7 @@ export function HomeTab() {
                 currentStationId={currentStationResponse?.id ?? null}
                 open={isStationChangeDialogOpen}
                 saveNewCurrentStation={(newCurrentStation, onSuccess) => {
-                    trigger(newCurrentStation, {
+                    void trigger(newCurrentStation, {
                         onSuccess: () => {
                             openSnackbarWithMessage('Station changed successfully', 'success');
                             onSuccess();
@@ -114,7 +122,9 @@ export function HomeTab() {
                         optimisticData: newCurrentStation,
                     });
                 }}
-                onClose={() => setStationChangeDialogOpen(false)}
+                onClose={() => {
+                    setStationChangeDialogOpen(false);
+                }}
                 isMutating={isMutating}
             />
             <Snackbar open={snackbarState.open} autoHideDuration={3000} onClose={closeSnackbar}>
