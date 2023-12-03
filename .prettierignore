@@ -1,4 +1,5 @@
 .clang-format
+pnpm-lock.yaml
 
 # Managed by `idf.py`
 esp/idf_component.yml

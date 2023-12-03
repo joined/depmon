@@ -11,19 +11,12 @@ repos:
 
     - repo: local
       hooks:
-          - id: check-frontend-dependencies-versions
-            name: Check versions of frontend dependencies
-            language: system
-            pass_filenames: false
-            always_run: true
-            entry: npx check-dependencies
-
           - id: prettier-format
             name: Prettier formatting
             language: system
             pass_filenames: false
             always_run: true
-            entry: npx prettier --write .
+            entry: pnpm exec prettier --write .
 
           - id: clang-format
             name: C++ Formatting
@@ -35,4 +28,4 @@ repos:
             name: ESLint frontend
             language: system
             files: ^frontend/.*\.tsx?$
-            entry: npx eslint --fix
+            entry: pnpm exec eslint --fix

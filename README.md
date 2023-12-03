@@ -4,25 +4,36 @@ An ESP32 project to monitor departures of the Berliner Verkehrsbetriebe (BVG) us
 
 ## Development
 
+The project is composed of three main parts:
+
+-   The ESP32 project, developed with the [ESP-IDF framework](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/)
+-   The native simulator for the GUI (based on [LVGL](https://lvgl.io/))
+-   The frontend React SPA served by the ESP32 which allows to configure it and get system information
+
 ### ESP32
 
-The ESP32 code is based on the ESP-IDF framework.
-To work with it it is recommended to install the "ESP-IDF" VSCode extension.
+The ESP32 code is based on the [ESP-IDF framework](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/).
+
+It is designed to run on a Sunton [3248S035C](https://www.openhasp.com/0.7.0/hardware/sunton/esp32-3248s035/) board (3.5", 480x320px).
+You can get one [here](https://de.aliexpress.com/item/1005004632953455.html).
+In the future, support for other boards is planned.
 
 ### Simulator
 
 The simulator code lives in `simulator` and is used to develop the UI. The UI library is symlinked from the ESP folder.
-To work with it is recommended to install the "PlatformIO" VSCode extension.
+It is developed using the [PlatformIO](https://platformio.org/) framework.
+Follow [these instructions](https://platformio.org/install/ide?install=vscode) to get started using it within VSCode.
 
 ### Frontend
 
-The `frontend` folder contains the source of the frontend for the configuration Webapp powered by the ESP32 board.
+The frontend is developed using React.
+You'll need to use to use [pnpm](https://pnpm.io/) to build it.
 
 Useful commands:
 
--   `yarn`: installs the dependencies
--   `yarn start`: starts a dev server with hot reloading and the mock backend API server
--   `yarn build`: builds the gzipped production version of the app, to be stored in the data partition of the ESP
+-   `pnpm i`: installs the dependencies
+-   `pnpm start`: starts a dev server with hot reloading and the mock backend API server
+-   `pnpm build`: builds the gzipped production version of the app, to be stored in the data partition of the ESP
 
 ### VSCode C++ Extension
 
