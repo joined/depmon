@@ -13,9 +13,9 @@ if(DEFINED ENV{GITHUB_ACTIONS})
 
     spiffs_create_partition_image(www ${ROOT_DIR}/frontend_dist FLASH_IN_PROJECT)
 else()
-    find_program(YARN_EXECUTABLE yarn)
-    if(NOT YARN_EXECUTABLE)
-        message(FATAL_ERROR "`yarn` not found, please install it.")
+    find_program(PNPM_EXECUTABLE pnpm)
+    if(NOT PNPM_EXECUTABLE)
+        message(FATAL_ERROR "`pnpm` not found, please install it.")
     endif()
 
     # TODO This breaks if the dev server is running, fix it
@@ -23,9 +23,9 @@ else()
         build_frontend
         PREFIX ${CMAKE_BINARY_DIR}/build_frontend
         SOURCE_DIR ${ROOT_DIR}
-        CONFIGURE_COMMAND ${YARN_EXECUTABLE}
+        CONFIGURE_COMMAND ${PNPM_EXECUTABLE} i
         USES_TERMINAL_BUILD true
-        BUILD_COMMAND ${YARN_EXECUTABLE} build
+        BUILD_COMMAND ${PNPM_EXECUTABLE} build
         INSTALL_COMMAND ""
         # TODO Ideally we would be building the frontend only if any files changed since the last build,
         # but that seems to be impossible with ExternalProject_Add.
