@@ -106,12 +106,26 @@ jobs:
               uses: actions/cache@v3
               with:
                   path: 'build'
-                  key: ${{ runner.os }}-build-v2
+                  key: ${{ runner.os }}-build-v3
+            - name: Cache managed components
+              uses: actions/cache@v3
+              with:
+                  path: 'managed_components'
+                  key: ${{ runner.os }}-managed_components-${{ hashFiles('dependencies.lock') }}
             - name: esp-idf build
               run: |
                   docker run -t -e IDF_TARGET="esp32" -e GITHUB_ACTIONS=true -v "${GITHUB_WORKSPACE}:/app/${{ github.repository }}" \
                   -w "/app/${{ github.repository }}" espressif/idf:release-v5.1 \
                   /bin/bash -c 'git config --global --add safe.directory "*" && idf.py build'
+            - name: Archive build output artifacts
+              uses: actions/upload-artifact@v3
+              with:
+                  name: build
+                  path: |
+                      build/bootloader/bootloader.bin
+                      build/partition_table/partition-table.bin
+                      build/depmon.bin
+                      build/www.bin
 
     build_simulator:
         name: Build simulator binary
