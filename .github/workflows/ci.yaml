@@ -113,7 +113,10 @@ jobs:
               uses: actions/cache@v3
               with:
                   path: 'managed_components'
-                  key: ${{ runner.os }}-managed_components-${{ hashFiles('dependencies.lock') }}
+                  key: ${{ runner.os }}-managed_components-${{ hashFiles('dependencies.lock') }}-v2
+            - name: Address ESP-IDF component hash bug
+              run: |
+                  rm -rf managed_components/bblanchon__arduinojson/.component_hash
             - name: esp-idf build
               run: |
                   docker run -t -e IDF_TARGET="esp32" -e GITHUB_ACTIONS=true -v "${GITHUB_WORKSPACE}:/app/${{ github.repository }}" \
