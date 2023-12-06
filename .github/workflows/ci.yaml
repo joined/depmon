@@ -108,7 +108,7 @@ jobs:
               uses: actions/cache@v3
               with:
                   path: 'build'
-                  key: ${{ runner.os }}-build-v3
+                  key: ${{ runner.os }}-build-v4
             - name: Cache managed components
               uses: actions/cache@v3
               with:
