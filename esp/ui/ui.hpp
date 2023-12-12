@@ -40,10 +40,10 @@ class SplashScreen : public Screen {
     lv_obj_t *spinner = nullptr;
 };
 
-class LogsScreen : public Screen {
+class ProvisioningScreen : public Screen {
   public:
     void init();
-    void addLogLine(const std::string &message);
+    void addLine(const std::string &message);
     void addQRCode(const std::string &data, const int size = 120);
 
   private:
@@ -56,8 +56,9 @@ class DeparturesScreen : public Screen {
   public:
     void init();
     void addRandomDepartureItem();
-    void addItem(const std::string &line_text, const std::string &direction_text,
-                 const std::optional<std::chrono::seconds> &time_to_departure);
+    void addDepartureItem(const std::string &line_text, const std::string &direction_text,
+                          const std::optional<std::chrono::seconds> &time_to_departure);
+    void addTextItem(const std::string &text);
     void clean();
 
   private:
@@ -68,7 +69,7 @@ class DeparturesScreen : public Screen {
 };
 
 inline SplashScreen splash_screen;
-inline LogsScreen logs_screen;
+inline ProvisioningScreen provisioning_screen;
 inline DeparturesScreen departures_screen;
 
 namespace UIManager {

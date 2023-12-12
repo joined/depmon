@@ -31,8 +31,6 @@ lv_obj_t *Screen::createPanel(lv_scroll_snap_t snap_type) {
     lv_obj_set_scroll_snap_y(panel, snap_type);
     lv_obj_clear_flag(panel, LV_OBJ_FLAG_SCROLL_ELASTIC | LV_OBJ_FLAG_SCROLL_MOMENTUM | LV_OBJ_FLAG_SCROLL_CHAIN);
     lv_obj_set_style_radius(panel, 0, DEFAULT_SELECTOR);
-    lv_obj_set_style_bg_color(panel, Color::yellow, DEFAULT_SELECTOR);
-    lv_obj_set_style_bg_opa(panel, 51, DEFAULT_SELECTOR);
     lv_obj_set_style_border_width(panel, 0, DEFAULT_SELECTOR);
     lv_obj_set_style_pad_hor(panel, 10, DEFAULT_SELECTOR);
     lv_obj_set_style_pad_ver(panel, 5, DEFAULT_SELECTOR);
@@ -78,22 +76,22 @@ void SplashScreen::updateStatus(const std::string &message) {
     lv_label_set_text(status, message.c_str());
 };
 
-void LogsScreen::init() {
+void ProvisioningScreen::init() {
     const std::lock_guard<std::recursive_mutex> lock(lvgl_mutex);
     screen = lv_obj_create(NULL);
     lv_obj_set_style_bg_color(screen, Color::black, DEFAULT_SELECTOR);
     lv_obj_set_style_bg_opa(screen, 255, DEFAULT_SELECTOR);
 
-    heading = lv_label_create(screen);
-    lv_obj_set_x(heading, 20);
-    lv_obj_set_y(heading, 7);
-    lv_label_set_text(heading, "DepMon Logs");
-    lv_obj_set_style_text_font(heading, &roboto_condensed_light_28_4bpp, DEFAULT_SELECTOR);
-
     panel = createPanel(LV_SCROLL_SNAP_END);
+    lv_obj_set_y(panel, 0);
+    lv_obj_set_style_height(panel, lv_pct(85), DEFAULT_SELECTOR);
+    lv_obj_set_style_bg_opa(panel, LV_OPA_0, DEFAULT_SELECTOR);
+    lv_obj_set_style_text_align(panel, LV_TEXT_ALIGN_CENTER, DEFAULT_SELECTOR);
+    lv_obj_set_flex_align(panel, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_START);
+    lv_obj_set_style_pad_row(panel, 10, DEFAULT_SELECTOR);
 };
 
-void LogsScreen::addLogLine(const std::string &message) {
+void ProvisioningScreen::addLine(const std::string &message) {
     if (panel == nullptr) {
         return;
     }
@@ -113,7 +111,7 @@ void LogsScreen::addLogLine(const std::string &message) {
     }
 };
 
-void LogsScreen::addQRCode(const std::string &data, const int size) {
+void ProvisioningScreen::addQRCode(const std::string &data, const int size) {
     if (panel == nullptr) {
         return;
     }
@@ -134,13 +132,11 @@ class DepartureItem {
         lv_obj_set_width(item, lv_pct(100));
         lv_obj_set_height(item, LV_SIZE_CONTENT);
         lv_obj_set_align(item, LV_ALIGN_TOP_LEFT);
-        lv_obj_set_style_bg_color(item, Color::black, DEFAULT_SELECTOR);
         lv_obj_set_style_bg_opa(item, 0, DEFAULT_SELECTOR);
         lv_obj_set_style_border_width(item, 0, DEFAULT_SELECTOR);
         lv_obj_set_style_pad_hor(item, 0, DEFAULT_SELECTOR);
         lv_obj_set_style_pad_ver(item, 0, DEFAULT_SELECTOR);
         lv_obj_set_style_text_color(item, Color::yellow, DEFAULT_SELECTOR);
-        lv_obj_set_style_text_opa(item, 255, DEFAULT_SELECTOR);
         lv_obj_set_style_text_font(item, &roboto_condensed_regular_28_4bpp, DEFAULT_SELECTOR);
 
         line = lv_label_create(item);
@@ -193,18 +189,20 @@ void DeparturesScreen::init() {
     lv_label_set_text(departure, "ETD");
 
     panel = createPanel(LV_SCROLL_SNAP_START);
+    lv_obj_set_style_bg_color(panel, Color::yellow, DEFAULT_SELECTOR);
+    lv_obj_set_style_bg_opa(panel, 51, DEFAULT_SELECTOR);
 };
 
 void DeparturesScreen::addRandomDepartureItem() {
     if (rand() % 2 == 0) {
-        addItem("RE55", "Sonnenallee", std::chrono::minutes(123));
+        addDepartureItem("RE55", "Sonnenallee", std::chrono::minutes(123));
     } else {
-        addItem("U7", "U Lorem ipsum sit amet consectetur", std::chrono::minutes(0));
+        addDepartureItem("U7", "U Rathaus Spandau / Kreuzung Altstadt", std::chrono::minutes(0));
     }
 };
 
-void DeparturesScreen::addItem(const std::string &line_text, const std::string &direction_text,
-                               const std::optional<std::chrono::seconds> &time_to_departure) {
+void DeparturesScreen::addDepartureItem(const std::string &line_text, const std::string &direction_text,
+                                        const std::optional<std::chrono::seconds> &time_to_departure) {
     if (panel == nullptr) {
         return;
     }
@@ -221,6 +219,23 @@ void DeparturesScreen::addItem(const std::string &line_text, const std::string &
     DepartureItem departureItem;
     departureItem.create(panel, line_text, direction_text, time_text);
 };
+
+void DeparturesScreen::addTextItem(const std::string &text) {
+    if (panel == nullptr) {
+        return;
+    }
+
+    {
+        const std::lock_guard<std::recursive_mutex> lock(lvgl_mutex);
+        auto *item = lv_label_create(panel);
+        lv_obj_set_width(item, lv_pct(100));
+        lv_obj_set_align(item, LV_ALIGN_CENTER);
+        lv_obj_set_style_text_font(item, &roboto_condensed_regular_28_4bpp, DEFAULT_SELECTOR);
+        lv_label_set_text(item, text.c_str());
+        lv_obj_set_style_text_font(item, &roboto_condensed_light_28_4bpp, DEFAULT_SELECTOR);
+        lv_obj_set_style_text_color(item, Color::yellow, DEFAULT_SELECTOR);
+    }
+}
 
 void DeparturesScreen::clean() {
     if (panel == nullptr) {

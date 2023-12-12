@@ -98,7 +98,7 @@ static void provisioning_event_handler(void *arg, esp_event_base_t event_base, i
 }
 
 static void init_mdns_and_netbios(void) {
-    // TODO Handle collision problem better, idea: do a query before setting the hostname and check if someone else
+    // TODO Handle collision problem, idea: do a query before setting the hostname and check if someone else
     // on the network is already using the default hostname (`depmon.local`). If so, append a number to the hostname.
     const auto uniqueTag = getMDNSHostname();
     // TODO We should display this tag somewhere, otherwise how do we know how to connect to the device?
@@ -117,7 +117,7 @@ static void init_mdns_and_netbios(void) {
 
 static void wifi_prov_print_qr(const std::string &name) {
     const std::string payload = "{\"ver\":\"v1\",\"name\":\"" + name + "\",\"transport\":\"softap\"}";
-    logs_screen.addQRCode(payload);
+    provisioning_screen.addQRCode(payload);
 }
 
 void init_network_wifi_and_wifimanager() {
@@ -151,7 +151,26 @@ QueueHandle_t departuresRefreshQueue = xQueueCreate(1, sizeof(uint8_t));
 
 void fetch_and_process_trips(BvgApiClient &apiClient) {
     ESP_LOGD(TAG, "Fetching trips...");
-    auto trips = apiClient.fetchAndParseTrips();
+    NVSEngine nvs_engine("depmon");
+
+    JsonDocument currentStationDoc;
+    auto err = nvs_engine.readCurrentStation(&currentStationDoc);
+    if (err) {
+        ESP_LOGE(TAG, "Failed to read current station from NVS");
+        const std::lock_guard<std::recursive_mutex> lock(lvgl_mutex);
+        // TODO Do not repeat this all the time, save the status and update the screen only on change
+        departures_screen.clean();
+        departures_screen.addTextItem("Station not found.");
+        departures_screen.addTextItem("Please access http://depmon.local/ to configure your station.");
+        return;
+    }
+
+    auto enabledProductsJsonArray = currentStationDoc["enabledProducts"].as<JsonArrayConst>();
+    std::vector<std::string> enabledProducts;
+    for (auto enabledProduct : enabledProductsJsonArray) {
+        enabledProducts.push_back(enabledProduct.as<std::string>());
+    }
+    auto trips = apiClient.fetchAndParseTrips(currentStationDoc["id"], enabledProducts);
     ESP_LOGD(TAG, "Fetched and parsed %d trips", trips.size());
 
     if (trips.empty()) {
@@ -171,7 +190,7 @@ void fetch_and_process_trips(BvgApiClient &apiClient) {
                                                    trip.departureTime.value() - now))
                                              : std::nullopt;
 
-            departures_screen.addItem(trip.lineName, trip.directionName, timeToDeparture);
+            departures_screen.addDepartureItem(trip.lineName, trip.directionName, timeToDeparture);
         }
     }
     ESP_LOGD(TAG, "Done processing trips");
@@ -225,10 +244,11 @@ extern "C" void app_main(void) {
 
         std::string service_name = getProvisioningSSID();
         ESP_ERROR_CHECK(wifi_prov_mgr_start_provisioning(WIFI_PROV_SECURITY_0, nullptr, service_name.c_str(), nullptr));
-        logs_screen.switchTo();
-        logs_screen.addLogLine("It looks like you're trying to set up your device.");
-        logs_screen.addLogLine("Please download the ESP SoftAP Provisioning app from the App Store or Google Play, "
-                               "open it and follow the instructions.");
+        provisioning_screen.switchTo();
+        provisioning_screen.addLine("It looks like you're trying to set up your device.");
+        provisioning_screen.addLine(
+            "Please download the \"ESP SoftAP Provisioning\" app from the App Store or Google Play, "
+            "open it and follow the instructions.");
         wifi_prov_print_qr(service_name.c_str());
     } else {
         ESP_LOGI(TAG, "Already provisioned, starting Wi-Fi STA");
@@ -248,13 +268,11 @@ extern "C" void app_main(void) {
     if (provisioned) {
         splash_screen.updateStatus("Connected! Switching to departures screen...");
     } else {
-        logs_screen.addLogLine("Connected to WiFi! Switching to departures board...");
+        provisioning_screen.addLine("Connected to WiFi! Switching to departures board...");
     }
 
     std::this_thread::sleep_for(2s);
 
-    // TODO This fails after initial provisioning and causes a reboot, figure out why
-    // "error in listen.."
     setup_http_server();
 
     // TODO We should avoid starting the timer before we have a valid time from NTP

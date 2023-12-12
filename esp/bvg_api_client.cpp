@@ -81,7 +81,7 @@ esp_err_t BvgApiClient::http_event_handler(esp_http_client_event_t *evt) {
     return ESP_OK;
 }
 
-void BvgApiClient::setUrl(const std::string &stationId, const JsonArray &enabledProducts) {
+void BvgApiClient::setUrl(const std::string &stationId, const std::vector<std::string> &enabledProducts) {
     // TODO store and read number of results from NVS. keep in mind that memory is limited.
     std::map<std::string, std::string> queryParams = {
         {"results", std::to_string(N_RESULTS)},
@@ -93,7 +93,7 @@ void BvgApiClient::setUrl(const std::string &stationId, const JsonArray &enabled
         queryParams[product] = "false";
     }
     for (const auto &product : enabledProducts) {
-        queryParams[product.as<std::string>()] = "true";
+        queryParams[product] = "true";
     }
 
     std::ostringstream url;
@@ -112,16 +112,10 @@ void BvgApiClient::setUrl(const std::string &stationId, const JsonArray &enabled
     esp_http_client_set_url(client, url.str().c_str());
 }
 
-std::vector<Trip> BvgApiClient::fetchAndParseTrips() {
-    NVSEngine nvs_engine("depmon");
-
-    JsonDocument currentStationDoc;
-    auto err = nvs_engine.readCurrentStation(&currentStationDoc);
-    if (err) {
-        return {};
-    }
-    this->setUrl(currentStationDoc["id"], currentStationDoc["enabledProducts"].as<JsonArray>());
-    err = esp_http_client_perform(client);
+std::vector<Trip> BvgApiClient::fetchAndParseTrips(const std::string &stationId,
+                                                   const std::vector<std::string> &enabledProducts) {
+    this->setUrl(stationId, enabledProducts);
+    auto err = esp_http_client_perform(client);
 
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "HTTP GET request failed: %s", esp_err_to_name(err));
