@@ -2,10 +2,9 @@
 
 An ESP32 project to monitor departures of the Berliner Verkehrsbetriebe (BVG) using Sunton development boards.
 
-<figure markdown>
-  ![Sunton 3248S035C board (front), configuration panel (back)](ui.png){ width="600", loading=lazy }
-  <figcaption>Sunton 3248S035C board (front), configuration panel (back)</figcaption>
-</figure>
+<p align="center">
+  <img src="docs/ui.png" width="500" alt="Sunton 3248S035C board (front), configuration panel (back)"/>
+</p>
 
 ## Features
 

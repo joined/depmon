@@ -1,18 +1,16 @@
-## Development
-
 The project is composed of three main parts:
 
 -   The ESP32 project, developed with the [ESP-IDF framework](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/)
 -   The native simulator for the GUI (based on [LVGL](https://lvgl.io/))
 -   The frontend React SPA served by the ESP32 which allows to configure it and get system information
 
-### Simulator
+## Simulator
 
 The simulator code lives in `simulator` and is used to develop the UI. The UI library is symlinked from the ESP folder.
 It is developed using the [PlatformIO](https://platformio.org/) framework.
 Follow [these instructions](https://platformio.org/install/ide?install=vscode) to get started using it within VSCode.
 
-### Frontend
+## Frontend
 
 The frontend is developed using React.
 You'll need to use to use [pnpm](https://pnpm.io/) to build it.

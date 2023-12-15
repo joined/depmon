@@ -1,0 +1,21 @@
+site_name: SunTransit
+docs_dir: src
+site_url: https://joined.github.io/suntransit/
+repo_url: https://github.com/joined/suntransit
+nav:
+    - Home: README.md
+    - Development: docs/development.md
+theme:
+    name: material
+    palette:
+        scheme: slate
+        primary: yellow
+        accent: deep orange
+markdown_extensions:
+    - attr_list
+    - md_in_html
+    - admonition
+    - pymdownx.details
+    - pymdownx.superfences
+plugins:
+    - glightbox
