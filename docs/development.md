@@ -4,6 +4,12 @@ The project is composed of three main parts:
 -   The native simulator for the GUI (based on [LVGL](https://lvgl.io/))
 -   The frontend React SPA served by the ESP32 which allows to configure it and get system information
 
+## Dependencies
+
+Install the Python dependencies via `pip install -r requirements.txt` (required to build docs & for the commit hooks).
+Either install them globally or in a virtual environment. If you use `idf.py` from the command line, you might want to install them
+in the IDF virtual environment, so that they are available when activating the IDF virtual environment.
+
 ## Simulator
 
 The simulator code lives in `simulator` and is used to develop the UI. The UI library is symlinked from the ESP folder.

@@ -1,4 +1,3 @@
-# To be installed globally or in the ESP-IDF virtual environment (so that when activating it, these dependencies are available)
 pre-commit
 mkdocs
 mkdocs-material

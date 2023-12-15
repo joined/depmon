@@ -8,8 +8,8 @@ An ESP32 project to monitor departures of the Berliner Verkehrsbetriebe (BVG) us
 
 ## Features
 
--   Based on Sunton [3248S035C](https://www.openhasp.com/0.7.0/hardware/sunton/esp32-3248s035/) boards (3.5", 480x320px). You can get one [here](https://de.aliexpress.com/item/1005004632953455.html). In the future, support for other boards is planned.
--   WiFi provisioning via the "ESP SoftAP Provisioning" app ([Play Store](https://play.google.com/store/apps/details?id=com.espressif.provsoftap), [Apple Store](https://apps.apple.com/us/app/esp-softap-provisioning/id1474040630)).
+-   Based on Sunton [3248S035C](https://www.openhasp.com/0.7.0/hardware/sunton/esp32-3248s035/) boards (3.5", 480x320px). In the future, support for other boards is planned.
+-   WiFi 🛜 provisioning via the "ESP SoftAP Provisioning" app 📱
 -   Web based configuration
 -   Selection of station to show departures from (BVG)
 -   Selection of products to show departures of 🚌🚇🚉🚆

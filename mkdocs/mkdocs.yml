@@ -4,6 +4,7 @@ site_url: https://joined.github.io/suntransit/
 repo_url: https://github.com/joined/suntransit
 nav:
     - Home: README.md
+    - Usage: docs/usage.md
     - Development: docs/development.md
 theme:
     name: material
