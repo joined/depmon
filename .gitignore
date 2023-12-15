@@ -15,3 +15,6 @@ sdkconfig.old
 # Simulator
 simulator/.pio
 simulator/.vscode
+
+# Docs
+site/
