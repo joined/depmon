@@ -99,7 +99,7 @@ static void provisioning_event_handler(void *arg, esp_event_base_t event_base, i
 
 static void init_mdns_and_netbios(void) {
     // TODO Handle collision problem, idea: do a query before setting the hostname and check if someone else
-    // on the network is already using the default hostname (`depmon.local`). If so, append a number to the hostname.
+    // on the network is already using the default hostname (`suntransit.local`). If so, append a number to the hostname.
     const auto uniqueTag = getMDNSHostname();
     // TODO We should display this tag somewhere, otherwise how do we know how to connect to the device?
     ESP_LOGI(TAG, "Unique tag: %s", uniqueTag.c_str());
@@ -108,11 +108,11 @@ static void init_mdns_and_netbios(void) {
     ESP_ERROR_CHECK(mdns_instance_name_set(uniqueTag.c_str()));
 
     mdns_txt_item_t serviceTxtData[] = {{"board", "esp32"}, {"path", "/"}};
-    ESP_ERROR_CHECK(mdns_service_add("DepMon Configuration Server", "_http", "_tcp", 80, serviceTxtData,
+    ESP_ERROR_CHECK(mdns_service_add("SunTransit Configuration Server", "_http", "_tcp", 80, serviceTxtData,
                                      sizeof(serviceTxtData) / sizeof(serviceTxtData[0])));
 
     netbiosns_init();
-    netbiosns_set_name("depmon");
+    netbiosns_set_name("suntransit");
 }
 
 static void wifi_prov_print_qr(const std::string &name) {
@@ -151,7 +151,7 @@ QueueHandle_t departuresRefreshQueue = xQueueCreate(1, sizeof(uint8_t));
 
 void fetch_and_process_trips(BvgApiClient &apiClient) {
     ESP_LOGD(TAG, "Fetching trips...");
-    NVSEngine nvs_engine("depmon");
+    NVSEngine nvs_engine("suntransit");
 
     JsonDocument currentStationDoc;
     auto err = nvs_engine.readCurrentStation(&currentStationDoc);
@@ -161,7 +161,7 @@ void fetch_and_process_trips(BvgApiClient &apiClient) {
         // TODO Do not repeat this all the time, save the status and update the screen only on change
         departures_screen.clean();
         departures_screen.addTextItem("Station not found.");
-        departures_screen.addTextItem("Please access http://depmon.local/ to configure your station.");
+        departures_screen.addTextItem("Please access http://suntransit.local/ to configure your station.");
         return;
     }
 

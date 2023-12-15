@@ -17,7 +17,7 @@ const std::vector<std::string> ALL_PRODUCTS = {"suburban", "subway", "tram", "bu
 BvgApiClient::BvgApiClient(const std::string &stationId) {
     esp_http_client_config_t config = {
         .url = "https://www.google.com", // Set later
-        .user_agent = "DepMon gasparini.lorenzo@gmail.com",
+        .user_agent = "SunTransit gasparini.lorenzo@gmail.com",
         .timeout_ms = 10000, // Seems to help with timeout issues
         .event_handler =
             [](esp_http_client_event_t *evt) {

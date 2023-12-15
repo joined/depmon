@@ -90,7 +90,7 @@ export const Root = () => {
                         </IconButton>
                         {/* TODO On mobile show the tab name? */}
                         <Typography variant="h6" noWrap component="div">
-                            DepMon
+                            SunTransit
                         </Typography>
                     </Toolbar>
                 </AppBar>

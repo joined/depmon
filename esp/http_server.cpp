@@ -219,7 +219,7 @@ static esp_err_t api_get_sysinfo_handler(httpd_req_t *req) {
 static esp_err_t api_get_current_station_handler(httpd_req_t *req) {
     httpd_resp_set_type(req, "application/json");
     std::string current_station;
-    NVSEngine nvs_engine("depmon");
+    NVSEngine nvs_engine("suntransit");
     auto err = nvs_engine.readString("current_station", &current_station);
     if (err != ESP_OK) {
         httpd_resp_sendstr(req, "null");
@@ -246,7 +246,7 @@ static esp_err_t api_set_current_station_handler(httpd_req_t *req) {
          * ensure that the underlying socket is closed */
         return ESP_FAIL;
     }
-    NVSEngine nvs_engine("depmon");
+    NVSEngine nvs_engine("suntransit");
     auto err = nvs_engine.setString("current_station", std::string(content, recv_size));
     if (err != ESP_OK) {
         httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to set current station");

@@ -32,10 +32,10 @@ std::string getMacString(const bool &separated) {
 
 std::string getMDNSHostname() {
     // TODO Update this when collision detection is implemented
-    return "depmon";
+    return "suntransit";
 }
 
 std::string getProvisioningSSID() {
     const auto mac = getMacString(false);
-    return "DEPMON_" + mac.substr(9, 3);
+    return "SUNTRANSIT_" + mac.substr(9, 3);
 }

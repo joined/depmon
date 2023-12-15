@@ -16,7 +16,7 @@ app.get('/sysinfo', (req, res) => {
         JSON.stringify({
             app_state: {
                 time: Date.now(),
-                mdns_hostname: 'depmon-fake.local',
+                mdns_hostname: 'suntransit-fake.local',
             },
             software: {
                 app_version: 'Mock app version',

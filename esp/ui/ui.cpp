@@ -47,9 +47,9 @@ void SplashScreen::init() {
     title = lv_label_create(screen);
     lv_obj_set_y(title, -40);
     lv_obj_set_align(title, LV_ALIGN_CENTER);
-    lv_label_set_text(title, "DepMon");
+    lv_label_set_text(title, "SunTransit");
     lv_obj_set_style_text_color(title, Color::white, DEFAULT_SELECTOR);
-    lv_obj_set_style_text_font(title, &montserrat_regular_96, DEFAULT_SELECTOR);
+    lv_obj_set_style_text_font(title, &montserrat_regular_72, DEFAULT_SELECTOR);
 
     status = lv_label_create(screen);
     lv_obj_set_y(status, -30);

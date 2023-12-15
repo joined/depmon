@@ -15,8 +15,8 @@ LV_FONT_DECLARE(roboto_condensed_light_28_4bpp);
 /* Used for the direction in the departures panel. Special features: has `⟲⟳` symbols (U+27F2 and U+27F3, for Ringbahn).
  */
 LV_FONT_DECLARE(roboto_condensed_regular_28_4bpp);
-/* Used for the big title in the splash screen. Has only the "DepMon" characters. */
-LV_FONT_DECLARE(montserrat_regular_96);
+/* Used for the big title in the splash screen. Has only the "SunTransit" characters. */
+LV_FONT_DECLARE(montserrat_regular_72);
 
 class Screen {
   public:

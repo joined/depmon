@@ -1,0 +1,5 @@
+# to be installed in the esp-idf venv for convenience
+pre-commit
+mkdocs
+mkdocs-material
+mkdocs-glightbox

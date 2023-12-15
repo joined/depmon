@@ -29,7 +29,7 @@ int main(void) {
 
     departures_screen.switchTo();
     departures_screen.addTextItem("Station not found.");
-    departures_screen.addTextItem("Please access http://depmon.local/ to configure your station.");
+    departures_screen.addTextItem("Please access http://suntransit.local/ to configure your station.");
 
     this_thread::sleep_for(2s);
 
