@@ -1,4 +1,5 @@
 site_name: SunTransit
+site_url: https://joined.github.io/suntransit/
 nav:
     - Home: index.md
     - Development: development.md
