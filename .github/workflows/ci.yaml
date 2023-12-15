@@ -164,6 +164,7 @@ jobs:
                   pio run --verbose --environment emulator
 
     deploy_docs:
+        name: Deploy docs via MkDocs
         runs-on: ubuntu-latest
         if: github.ref == 'refs/heads/main'
         steps:
