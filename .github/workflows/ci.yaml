@@ -177,12 +177,15 @@ jobs:
               with:
                   python-version: 3.11
                   cache: 'pip'
+            - name: Install Python dependencies
+              run: pip install -r requirements.txt
             - run: echo "cache_id=$(date --utc '+%V')" >> "$GITHUB_ENV"
             - uses: actions/cache@v3
               with:
                   key: mkdocs-material-${{ env.cache_id }}
-                  path: .cache
+                  path: mkdocs/.cache
                   restore-keys: |
                       mkdocs-material-
-            - run: pip install -r requirements.txt
-            - run: mkdocs gh-deploy --force
+            - run: |
+                  cd mkdocs
+                  mkdocs gh-deploy --force
