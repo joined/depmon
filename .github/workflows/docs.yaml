@@ -40,7 +40,7 @@ jobs:
               # `_site` directory name is used for Jekyll compatiblity, see https://github.com/actions/upload-pages-artifact/blob/main/action.yml#L12
               run: |
                   cd mkdocs
-                  mkdocs build --config-file ./mkdocs.yml --site-dir ./_site
+                  mkdocs build --config-file ./mkdocs.yml --site-dir ../_site
             - name: Upload artifact
               uses: actions/upload-pages-artifact@v2
 
