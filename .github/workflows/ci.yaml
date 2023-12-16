@@ -126,7 +126,7 @@ jobs:
                   -w "/app/${{ github.repository }}" espressif/idf:release-v5.1 \
                   /bin/bash -c 'git config --global --add safe.directory "*" && idf.py build'
             - name: Archive build output artifacts
-              uses: actions/upload-artifact@v3
+              uses: actions/upload-artifact@v4
               with:
                   name: build
                   path: |
