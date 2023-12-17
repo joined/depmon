@@ -1,20 +1,22 @@
 # Frontend
-node_modules/
-frontend_dist/
-.parcel-cache/
+/node_modules/
+/frontend_dist/
+/.parcel-cache/
 .cache/
 # `parcel serve` doesn't respect the `distDir` option :( https://github.com/parcel-bundler/parcel/issues/9096
-dist/
+/dist/
 
 # ESP
-build/
-managed_components/
-sdkconfig
-sdkconfig.old
+/build/
+/managed_components/
+/sdkconfig
+/sdkconfig.old
 
 # Simulator
-simulator/.pio
-simulator/.vscode
+/simulator/.pio/
+/simulator/.vscode/
 
 # Docs
-site/
+/docs_build/
+/docs/index.md
+__pycache__/
