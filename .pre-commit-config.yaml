@@ -13,9 +13,10 @@ repos:
           - id: prettier-format
             name: Prettier formatting
             language: system
-            pass_filenames: false
-            always_run: true
-            entry: pnpm exec prettier --write .
+            exclude_types:
+                - python
+                - image
+            entry: pnpm exec prettier --write
 
           - id: clang-format
             name: C++ Formatting
