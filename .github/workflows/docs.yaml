@@ -38,9 +38,7 @@ jobs:
               # TODO Maybe cache the `.cache` folder? It doesn't seem to be generated though
             - name: Build site
               # `_site` directory name is used for Jekyll compatiblity, see https://github.com/actions/upload-pages-artifact/blob/main/action.yml#L12
-              run: |
-                  cd mkdocs
-                  mkdocs build --config-file ./mkdocs.yml --site-dir ../_site
+              run: mkdocs build --config-file ./mkdocs.yml --site-dir ./_site
             - name: Upload artifact
               uses: actions/upload-pages-artifact@v2
 
