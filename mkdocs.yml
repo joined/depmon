@@ -5,18 +5,26 @@ repo_url: https://github.com/joined/suntransit
 nav:
     - Home: index.md
     - Usage: usage.md
+    - Installer: installer.md
     - Development: development.md
 theme:
     name: material
     logo: icon.svg
     favicon: favicon.png
-    custom_dir: mkdocs_theme_overrides
+    custom_dir: mkdocs/theme_overrides
     palette:
         scheme: slate
         primary: yellow
         accent: deep orange
     features:
         - navigation.instant
+extra_javascript:
+    - path: https://unpkg.com/esp-web-tools@9/dist/web/install-button.js?module
+      type: module
+extra_css:
+    - css/extra.css
+watch:
+    - mkdocs/
 markdown_extensions:
     # Python Markdown
     - abbr
@@ -50,7 +58,10 @@ markdown_extensions:
           custom_checkbox: true
     - pymdownx.tilde
 plugins:
+    - search
     - glightbox
     - gen-files:
           scripts:
-              - docs/gen_index.py
+              - mkdocs/gen_index.py
+hooks:
+    - mkdocs/gen_manifest.py

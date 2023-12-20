@@ -16,6 +16,7 @@ repos:
             exclude_types:
                 - python
                 - image
+                - shell
             entry: pnpm exec prettier --write
 
           - id: clang-format

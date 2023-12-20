@@ -6,15 +6,20 @@ The project is composed of three main parts:
 
 ## Dependencies
 
-Install the Python dependencies via `pip install -r requirements.txt` (required to build docs & for the commit hooks).
+Install the Python dependencies via `pip install -r requirements.txt`.
 Either install them globally or in a virtual environment. If you use `idf.py` from the command line, you might want to install them
 in the IDF virtual environment, so that they are available when activating the IDF virtual environment.
+
+## ESP32
+
+Install the [ESP-IDF](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/) framework, preferably via the [VSCode Extension](https://github.com/espressif/vscode-esp-idf-extension/blob/master/docs/tutorial/install.md).
 
 ## Simulator
 
 The simulator code lives in `simulator` and is used to develop the UI. The UI library is symlinked from the ESP folder.
 It is developed using the [PlatformIO](https://platformio.org/) framework.
 Follow [these instructions](https://platformio.org/install/ide?install=vscode) to get started using it within VSCode.
+It uses [libsdl](https://github.com/libsdl-org/SDL), make sure to install it (e.g. `sudo apt-get install libsdl2-dev`).
 
 ## Frontend
 

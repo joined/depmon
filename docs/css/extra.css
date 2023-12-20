@@ -1,0 +1,4 @@
+body {
+    --esp-tools-button-color: var(--md-primary-fg-color);
+    --esp-tools-button-text-color: black;
+}
