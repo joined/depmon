@@ -50,6 +50,7 @@ jobs:
             name: github-pages
             url: ${{ steps.deployment.outputs.page_url }}
         runs-on: ubuntu-latest
+        # TODO improve this so that if esp build fails, publish the docs anyway (with a warning in the installer page)
         needs: build_and_upload
         steps:
             - name: Deploy to GitHub Pages
