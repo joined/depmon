@@ -7,6 +7,7 @@ nav:
     - Usage: usage.md
     - Installer: installer.md
     - Development: development.md
+    - Related projects: related.md
 theme:
     name: material
     logo: icon.svg
