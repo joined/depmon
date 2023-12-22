@@ -1,7 +1,7 @@
 site_name: SunTransit
 site_dir: docs_build
 site_url: https://suntrans.it
-repo_url: https://github.com/joined/suntransit
+repo_url: https://github.com/joined/SunTransit
 nav:
     - Home: index.md
     - Usage: usage.md
@@ -26,6 +26,7 @@ extra_css:
     - css/extra.css
 watch:
     - mkdocs/
+    - README.md
 markdown_extensions:
     # Python Markdown
     - abbr
@@ -63,6 +64,7 @@ plugins:
     - glightbox
     - gen-files:
           scripts:
-              - mkdocs/gen_index.py
+              - mkdocs/gen_files/gen_index.py
+    - macros
 hooks:
-    - mkdocs/gen_manifest.py
+    - mkdocs/hooks/gen_manifest.py

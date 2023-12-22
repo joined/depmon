@@ -1,7 +1,7 @@
 The project is composed of three main parts:
 
 -   The ESP32 project, developed with the [ESP-IDF framework](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/)
--   The native simulator for the GUI (based on [LVGL](https://lvgl.io/))
+-   The Linux simulator for the GUI (based on [LVGL](https://lvgl.io/))
 -   The frontend React SPA served by the ESP32 which allows to configure it and get system information
 
 ## Dependencies

@@ -3,3 +3,4 @@ mkdocs
 mkdocs-material
 mkdocs-glightbox
 mkdocs-gen-files
+mkdocs-macros-plugin

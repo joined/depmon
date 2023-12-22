@@ -1,6 +1,6 @@
 # Welcome to SunTransit
 
-An ESP32 project to monitor departures of the Berliner Verkehrsbetriebe (BVG) using Sunton development boards.
+An [ESP32](https://www.espressif.com/en/products/socs/esp32) project to monitor departures of the [Berliner Verkehrsbetriebe (BVG)](https://www.bvg.de) using Sunton development boards.
 
 <p align="center">
   <img src="docs/ui.png" width="500" alt="Sunton 3248S035C board (front), configuration panel (back)"/>

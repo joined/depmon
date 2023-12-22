@@ -27,6 +27,7 @@ jobs:
             - name: Checkout
               uses: actions/checkout@v4
             - name: Build ESP binaries
+              continue-on-error: true
               uses: ./.github/actions/build-esp
             - name: Setup Pages
               uses: actions/configure-pages@v4
@@ -50,7 +51,6 @@ jobs:
             name: github-pages
             url: ${{ steps.deployment.outputs.page_url }}
         runs-on: ubuntu-latest
-        # TODO improve this so that if esp build fails, publish the docs anyway (with a warning in the installer page)
         needs: build_and_upload
         steps:
             - name: Deploy to GitHub Pages
