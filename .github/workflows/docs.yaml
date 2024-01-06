@@ -43,7 +43,7 @@ jobs:
               # `_site` directory name is used for Jekyll compatiblity, see https://github.com/actions/upload-pages-artifact/blob/main/action.yml#L12
               run: mkdocs build --config-file ./mkdocs.yml --site-dir ./_site
             - name: Upload artifact
-              uses: actions/upload-pages-artifact@v2
+              uses: actions/upload-pages-artifact@v3
 
     deploy:
         name: 'Deploy to GitHub Pages'
@@ -55,4 +55,4 @@ jobs:
         steps:
             - name: Deploy to GitHub Pages
               id: deployment
-              uses: actions/deploy-pages@v3
+              uses: actions/deploy-pages@v4
