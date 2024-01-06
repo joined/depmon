@@ -18,6 +18,7 @@ repos:
                 - image
                 - shell
                 - plain-text
+                - text
             entry: pnpm exec prettier --write
 
           - id: clang-format
