@@ -12,6 +12,10 @@
 
 static const char *TAG = "BvgApiClient";
 
+// ~21KB for the average response with N_RESULTS=12
+static const constexpr size_t HTTP_CLIENT_BUFFER_SIZE = 30 * 1024;
+static char http_client_buffer[HTTP_CLIENT_BUFFER_SIZE];
+
 const std::vector<std::string> ALL_PRODUCTS = {"suburban", "subway", "tram", "bus", "ferry", "express", "regional"};
 
 BvgApiClient::BvgApiClient(const std::string &stationId) {
@@ -37,30 +41,13 @@ esp_err_t BvgApiClient::http_event_handler(esp_http_client_event_t *evt) {
     switch (evt->event_id) {
     case HTTP_EVENT_ON_DATA:
         ESP_LOGD(TAG, "HTTP_EVENT_ON_DATA, data_len=%d", evt->data_len);
-        ESP_LOGD(TAG, "Current buffer size: %d", this->current_buffer_size);
         ESP_LOGD(TAG, "Current buffer_pos: %d", buffer_pos);
 
-        if (this->output_buffer == NULL) {
-            this->current_buffer_size = HTTP_BUFFER_START_SIZE;
-            this->output_buffer = (char *)malloc(this->current_buffer_size);
-            this->buffer_pos = 0;
-            if (this->output_buffer == NULL) {
-                ESP_LOGE(TAG, "Failed to allocate memory for output buffer");
-                return ESP_FAIL;
-            }
-        } else {
-            while (this->buffer_pos + evt->data_len >= this->current_buffer_size) {
-                ESP_LOGD(TAG, "Would overflow buffer, reallocating");
-                this->current_buffer_size *= this->BUFFER_GROWTH_FACTOR;
-                this->output_buffer = (char *)realloc(this->output_buffer, this->current_buffer_size);
-
-                if (this->output_buffer == NULL) {
-                    ESP_LOGE(TAG, "Failed to reallocate memory for output buffer");
-                    return ESP_FAIL;
-                }
-            }
+        if (this->buffer_pos + evt->data_len >= HTTP_CLIENT_BUFFER_SIZE) {
+            ESP_LOGE(TAG, "Would overflow buffer, bailing out");
+            return ESP_FAIL;
         }
-        memcpy(this->output_buffer + buffer_pos, evt->data, evt->data_len);
+        memcpy(http_client_buffer + buffer_pos, evt->data, evt->data_len);
         this->buffer_pos += evt->data_len;
         break;
 
@@ -70,9 +57,7 @@ esp_err_t BvgApiClient::http_event_handler(esp_http_client_event_t *evt) {
         break;
     case HTTP_EVENT_DISCONNECTED:
         ESP_LOGD(TAG, "HTTP_EVENT_DISCONNECTED");
-        free(this->output_buffer);
-        this->output_buffer = NULL;
-        buffer_pos = 0;
+        this->buffer_pos = 0;
         break;
     default:
         break;
@@ -122,11 +107,6 @@ std::vector<Trip> BvgApiClient::fetchAndParseTrips(const std::string &stationId,
         return {};
     }
 
-    if (this->output_buffer == NULL) {
-        ESP_LOGE(TAG, "No response buffer, something went wrong");
-        return {};
-    }
-
     JsonDocument filter;
     filter["departures"][0]["tripId"] = true;
     filter["departures"][0]["direction"] = true;
@@ -135,7 +115,7 @@ std::vector<Trip> BvgApiClient::fetchAndParseTrips(const std::string &stationId,
 
     JsonDocument doc;
     // TODO It would be cool to use a std::istream here, would probably save memory too.
-    auto deserializationError = deserializeJson(doc, this->output_buffer, DeserializationOption::Filter(filter));
+    auto deserializationError = deserializeJson(doc, http_client_buffer, DeserializationOption::Filter(filter));
     if (deserializationError) {
         ESP_LOGE(TAG, "Failed to parse JSON: %s", deserializationError.c_str());
         return {};
@@ -162,9 +142,6 @@ std::vector<Trip> BvgApiClient::fetchAndParseTrips(const std::string &stationId,
         trips.push_back(
             {.tripId = tripId, .departureTime = departure_time, .directionName = direction, .lineName = line});
     }
-
-    free(this->output_buffer);
-    this->output_buffer = NULL;
 
     return trips;
 }

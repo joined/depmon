@@ -22,6 +22,7 @@ import {
 } from '@mui/material';
 import { AxiosError } from 'axios';
 import React, { useState } from 'react';
+import * as R from 'remeda';
 import useSWRImmutable from 'swr/immutable';
 import {
     SysInfoResponse,
@@ -129,7 +130,7 @@ const MemoryTable = ({ data }: { data: SysInfoMemoryResponse }) => (
                         <TableCell component="th" scope="row">
                             {KEY_TO_LABEL[key] || key}
                         </TableCell>
-                        <TableCell align="right">{data[key]}</TableCell>
+                        <TableCell align="right">{data[key]} bytes</TableCell>
                     </TableRow>
                 ))}
             </TableBody>
@@ -173,7 +174,7 @@ const TaskTable = ({ data }: { data: Array<SysInfoTaskResponse> }) => (
                 </TableRow>
             </TableHead>
             <TableBody>
-                {data.map((task) => (
+                {R.sortBy(data, (task) => -task.stack_high_water_mark).map((task) => (
                     <TableRow key={`${task.name}-${task.core_id}`} css={lastTableRowStyle}>
                         <TableCell
                             css={css`
@@ -181,13 +182,8 @@ const TaskTable = ({ data }: { data: Array<SysInfoTaskResponse> }) => (
                             `}>
                             {task.name}
                         </TableCell>
-                        {(['priority', 'stack_high_water_mark'] satisfies Array<keyof SysInfoTaskResponse>).map(
-                            (key) => (
-                                <TableCell key={key} align="right">
-                                    {task[key]}
-                                </TableCell>
-                            )
-                        )}
+                        <TableCell align="right">{task.priority}</TableCell>
+                        <TableCell align="right">{Math.round(task.stack_high_water_mark * 4)} bytes</TableCell>
                         <TableCell align="right">{TASK_STATUS_TO_ICON[task.state]}</TableCell>
                         {task.runtime !== null ? <TableCell align="right">{task.runtime}%</TableCell> : null}
                         {task.core_id !== null ? <TableCell align="right">{task.core_id}</TableCell> : null}
