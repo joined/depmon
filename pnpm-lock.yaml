@@ -39,8 +39,8 @@ dependencies:
     specifier: ^6.21.0
     version: 6.21.0(react-dom@18.2.0)(react@18.2.0)
   remeda:
-    specifier: ^1.33.0
-    version: 1.33.0
+    specifier: ^1.38.0
+    version: 1.38.0
   swr:
     specifier: ^2.2.4
     version: 2.2.4(react@18.2.0)
@@ -6109,8 +6109,8 @@ packages:
       set-function-name: 2.0.1
     dev: true
 
-  /remeda@1.33.0:
-    resolution: {integrity: sha512-GExMiOhTB0eg1Rc7hvBMBNxwlVRYIulGfIj5pkuuAfy9HB3ms4PmLvbhMMjQ2btoCit0iN7eQmHgwTaGZTVWwg==}
+  /remeda@1.38.0:
+    resolution: {integrity: sha512-5as2nVwzgeLLXMk1v9SLi8CeT+LUzM0202AFo13WRCupQjLlfiyN1fhlY3LO0jSzP6AtA2M2PbjTY4sQKrrBfg==}
     dev: false
 
   /remove-accents@0.4.4:
