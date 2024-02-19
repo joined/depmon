@@ -50,8 +50,8 @@ devDependencies:
     specifier: ^7.23.3
     version: 7.23.3(@babel/core@7.23.5)
   '@parcel/compressor-gzip':
-    specifier: ^2.10.3
-    version: 2.10.3(@parcel/core@2.11.0)
+    specifier: ^2.11.0
+    version: 2.11.0(@parcel/core@2.11.0)
   '@parcel/config-default':
     specifier: ^2.10.3
     version: 2.10.3(@parcel/core@2.11.0)(typescript@5.3.3)
@@ -1397,11 +1397,11 @@ packages:
       chalk: 4.1.2
     dev: true
 
-  /@parcel/compressor-gzip@2.10.3(@parcel/core@2.11.0):
-    resolution: {integrity: sha512-Qdolj7yqw2VYPZdxrqqve+/SCiHY/gJqRcWB6BkreosDg6esx1UWT9M0Y7g4d+M062erfdp0/h0GpVY6bD4LRw==}
-    engines: {node: '>= 12.0.0', parcel: ^2.10.3}
+  /@parcel/compressor-gzip@2.11.0(@parcel/core@2.11.0):
+    resolution: {integrity: sha512-Tqn8WtqRnGeIUte7z823PMx7EeTcCjzL3zhHiUObZ418+9bJjskwOMSW2cE1nrzt7fP5Cq/cqlUC731zwD4RoA==}
+    engines: {node: '>= 12.0.0', parcel: ^2.11.0}
     dependencies:
-      '@parcel/plugin': 2.10.3(@parcel/core@2.11.0)
+      '@parcel/plugin': 2.11.0(@parcel/core@2.11.0)
     transitivePeerDependencies:
       - '@parcel/core'
     dev: true
